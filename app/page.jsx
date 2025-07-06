@@ -1,0 +1,238 @@
+'use client';
+
+import React, { useState, useEffect, useMemo } from 'react';
+import { auth } from '@/lib/firebaseClient';
+import { useAuthManager } from '@/hooks/useAuthManager';
+import { useFirebaseData } from '@/hooks/useFirebaseData';
+import useFoodPairingAI from '@/hooks/useFoodPairingAI';
+import useWineActions from '@/hooks/useWineActions';
+import CellarView from '@/views/cellar/CellarView';
+import DrinkSoonView from '@/views/DrinkSoonView/DrinkSoonView';
+import ExperiencedWinesView from '@/views/experienced/ExperiencedWinesView';
+import ImportExportView from '@/views/importExport/ImportExportView';
+import FoodPairingView from '@/views/pairing/FoodPairingView';
+import HelpView from '@/views/help/HelpView';
+import WineFormModal from '@/components/WineFormModal';
+import ExperienceWineModal from '@/components/ExperienceWineModal';
+import FoodPairingModal from '@/components/FoodPairingModal';
+import ReverseFoodPairingModal from '@/components/ReverseFoodPairingModal';
+import AuthModal from '@/components/AuthModal';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import AlertMessage from '@/components/AlertMessage';
+import { parseCsv, exportToCsv } from '@/utils';
+
+export default function HomePage() {
+  // UI state
+  const [view, setView] = useState('cellar');
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [isRegister, setIsRegister] = useState(false);
+  const [csvFile, setCsvFile] = useState(null);
+  const [csvImportStatus, setCsvImportStatus] = useState({ message: '', type: '', errors: [] });
+  const [foodForReversePairing, setFoodForReversePairing] = useState('');
+  const [wineToEdit, setWineToEdit] = useState(null);
+  const [wineToExperience, setWineToExperience] = useState(null);
+  const [pairingWine, setPairingWine] = useState(null);
+
+  // Auth
+  const { authError, isLoadingAuth, login, register, logout } = useAuthManager(auth);
+
+  // Data
+  const { user, isAuthReady, wines, experiencedWines, isLoadingData, dataError, db, appId } = useFirebaseData();
+
+  // Compute soon-to-drink
+  const winesApproachingEnd = useMemo(() => {
+    const current = new Date().getFullYear();
+    return wines.filter(w => w.drinkingWindowEndYear && w.drinkingWindowEndYear <= current);
+  }, [wines]);
+
+  // Reverse pairing AI
+  const { callGeminiProxy: findWineForFood, response: reversePairing, loading: isLoadingAI, error: pairingError } = useFoodPairingAI();
+
+  // CRUD actions
+  const {
+    handleAddWine,
+    handleUpdateWine,
+    handleExperienceWine,
+    handleDeleteWine,
+    handleDeleteExperiencedWine,
+    handleEraseAllWines,
+    isLoadingAction,
+    actionError
+  } = useWineActions(db, user?.uid, appId, msg => setCsvImportStatus({ message: msg, type: 'error', errors: [] }));
+
+  // Global error
+  const globalError = dataError || authError || actionError || pairingError;
+
+  // CSV import/export
+  const handleImportCsv = async () => {
+    if (!csvFile) return;
+    const reader = new FileReader();
+    reader.onload = async e => {
+      try {
+        const { data: parsed } = parseCsv(e.target.result);
+        for (const w of parsed) await handleAddWine(w, wines);
+        setCsvImportStatus({ message: 'Imported successfully!', type: 'success', errors: [] });
+      } catch (err) {
+        setCsvImportStatus({ message: err.message, type: 'error', errors: [] });
+      }
+    };
+    reader.readAsText(csvFile);
+  };
+  const handleExportCsv = () => exportToCsv(wines, 'my_cellar.csv');
+  const handleExportExperiencedCsv = () => exportToCsv(experiencedWines, 'experienced_wines.csv');
+
+  // Loading state
+  if (isLoadingAuth || !isAuthReady || isLoadingData) {
+    return (
+      <div className="flex items-center justify-center h-screen"><LoadingSpinner /></div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-slate-100">
+      {/* Header */}
+      <header className="flex items-center justify-between p-6 bg-white dark:bg-slate-800 shadow">
+        <h1 className="text-3xl font-bold">My Wine Cellar</h1>
+        <div className="flex items-center space-x-4">
+          {user?.email && <span className="text-sm text-gray-700 dark:text-gray-300">{user.email}</span>}
+          {user ? (
+            <button onClick={logout} className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded">
+              Logout
+            </button>
+          ) : (
+            <button onClick={() => { setShowAuthModal(true); setIsRegister(false); }} className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded">
+              Login
+            </button>
+          )}
+        </div>
+      </header>
+
+      {/* Error Banner */}
+      {globalError && <AlertMessage message={globalError} type="error" onDismiss={() => {}} />}
+
+      {/* Navigation */}
+      <nav className="flex space-x-2 p-4 bg-white dark:bg-slate-800">
+        {[
+          ['cellar','Cellar'],
+          ['drinksoon','Drink Soon'],
+          ['experienced','Experienced'],
+          ['pairing','Food Pairing'],
+          ['importExport','Import/Export'],
+          ['help','Help']
+        ].map(([key,label]) => (
+          <button key={key} onClick={() => setView(key)} className={`px-3 py-1 rounded ${view===key?'bg-blue-600 text-white':'bg-gray-200 dark:bg-slate-700'}`}>{label}</button>
+        ))}
+      </nav>
+
+      {/* Main Content */}
+      <main className="p-6 space-y-10">
+        {view==='cellar' && (
+          <CellarView
+            wines={wines}
+            isLoadingAction={isLoadingAction}
+            addWine={w=>handleAddWine(w,wines)}
+            updateWine={(id,d)=>handleUpdateWine(id,d,wines)}
+            deleteWine={handleDeleteWine}
+          />
+        )}
+        {view==='drinksoon' && (
+          <DrinkSoonView
+            // ◀ PASS the full list
+            wines={wines}
+            // callbacks to open/close/modal control
+            handleOpenWineForm={wine => setWineToEdit(wine)}
+            confirmExperienceWine={id => setWineToExperience(id)}
+            handleOpenFoodPairing={wine => setPairingWine(wine)}
+            isLoadingAction={isLoadingAction}
+            error={actionError}
+            setError={msg => {/* clear or set actionError state */}
+              /* e.g. setActionError(msg) */
+            }
+
+            // the modal state you already have:
+            wineFormOpen={!!wineToEdit}
+            onWineFormClose={() => setWineToEdit(null)}
+            experienceOpen={!!wineToExperience}
+            onExperienceClose={() => setWineToExperience(null)}
+            foodPairingOpen={!!pairingWine}
+            onFoodPairingClose={() => setPairingWine(null)}
+
+            // selected items:
+            selectedWine={wineToEdit}
+            selectedExperienceWineId={wineToExperience}
+            selectedPairingWine={pairingWine}
+			/>
+        )}
+        {view==='experienced' && (
+          <ExperiencedWinesView
+            experiencedWines={experiencedWines}
+            onDelete={handleDeleteExperiencedWine}
+          />
+        )}
+        {view==='pairing' && (
+          <FoodPairingView
+            foodForReversePairing={foodForReversePairing}
+            setFoodForReversePairing={setFoodForReversePairing}
+            handleFindWineForFood={() => findWineForFood(foodForReversePairing,wines)}
+            isLoadingReversePairing={isLoadingAI}
+            wines={wines}
+          />
+        )}
+        {view==='importExport' && (
+          <ImportExportView
+            csvFile={csvFile}
+            handleCsvFileChange={e=>setCsvFile(e.target.files[0])}
+            handleImportCsv={handleImportCsv}
+            isImportingCsv={isLoadingAction}
+            csvImportStatus={csvImportStatus}
+            setCsvImportStatus={setCsvImportStatus}
+            wines={wines}
+            experiencedWines={experiencedWines}
+            handleExportCsv={handleExportCsv}
+            handleExportExperiencedCsv={handleExportExperiencedCsv}
+            confirmEraseAllWines={()=>window.confirm('Really erase all wines?')&&handleEraseAllWines()}
+          />
+        )}
+        {view==='help' && <HelpView />}
+      </main>
+
+      {/* Modals */}
+      {wineToEdit && (
+        <WineFormModal
+          isOpen
+          onClose={()=>setWineToEdit(null)}
+          wine={wineToEdit}
+          onSubmit={data => wineToEdit.id ? handleUpdateWine(wineToEdit.id,data,wines) : handleAddWine(data,wines)}
+          allWines={wines}
+        />
+      )}
+      {wineToExperience && (
+        <ExperienceWineModal
+          isOpen
+          onClose={()=>setWineToExperience(null)}
+          wineId={wineToExperience}
+          onConfirm={(notes,rating,date) => handleExperienceWine(wineToExperience,notes,rating,date,wines)}
+        />
+      )}
+      {pairingWine && (
+        <FoodPairingModal
+          isOpen
+          onClose={()=>setPairingWine(null)}
+          wine={pairingWine}
+        />
+      )}
+      {showAuthModal && (
+        <AuthModal
+          isOpen
+          onClose={()=>setShowAuthModal(false)}
+          isRegister={isRegister}
+          setIsRegister={setIsRegister}
+          onLogin={login}
+          onRegister={register}
+          error={authError}
+          loading={isLoadingAuth}
+        />
+      )}
+    </div>
+  );
+}
