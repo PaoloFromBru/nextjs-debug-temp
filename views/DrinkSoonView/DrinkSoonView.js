@@ -2,9 +2,6 @@
 
 import React, { useEffect, useMemo } from 'react';
 import WineItem from '@/components/WineItem';
-import WineFormModal from '@/components/WineFormModal';
-import ExperienceWineModal from '@/components/ExperienceWineModal';
-import FoodPairingModal from '@/components/FoodPairingModal';
 import AlertMessage from '@/components/AlertMessage';
 
 // --- Icons ---
@@ -22,17 +19,6 @@ const DrinkSoonView = ({
   error,
   setError,
   isLoadingAction,
-  // Modal control from parent
-  wineFormOpen,
-  onWineFormClose,
-  experienceOpen,
-  onExperienceClose,
-  foodPairingOpen,
-  onFoodPairingClose,
-  // Selected items passed by parent
-  selectedWine,
-  selectedExperienceWineId,
-  selectedPairingWine,
 }) => {
   // Compute wines approaching end based on drinkingWindowEndYear
   const winesApproachingEnd = useMemo(() => {
@@ -64,7 +50,7 @@ const DrinkSoonView = ({
                 key={wine.id}
                 wine={wine}
                 onEdit={() => handleOpenWineForm(wine)}
-                onExperience={() => confirmExperienceWine(wine.id)}
+                onExperience={() => confirmExperienceWine(wine)}
                 onPairFood={() => handleOpenFoodPairing(wine)}
                 loading={isLoadingAction}
               />
@@ -78,25 +64,6 @@ const DrinkSoonView = ({
           <p className="text-slate-500 dark:text-slate-400">All wines are currently within their drinking window.</p>
         </div>
       )}
-
-      {/* Modals (controlled by parent) */}
-      <WineFormModal
-        isOpen={wineFormOpen}
-        onClose={onWineFormClose}
-        wine={selectedWine}
-        loading={isLoadingAction}
-      />
-      <ExperienceWineModal
-        isOpen={experienceOpen}
-        onClose={onExperienceClose}
-        wineId={selectedExperienceWineId}
-        loading={isLoadingAction}
-      />
-      <FoodPairingModal
-        isOpen={foodPairingOpen}
-        onClose={onFoodPairingClose}
-        wine={selectedPairingWine}
-      />
 
       <AlertMessage message={error} type="error" onDismiss={() => setError(null)} />
     </>

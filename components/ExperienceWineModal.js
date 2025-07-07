@@ -38,7 +38,7 @@ const ExperienceWineModal = ({ isOpen, onClose, wine, onExperience }) => {
         }
 
         try {
-            await onExperience(wine.id, tastingNotes, rating, consumedDate);
+            await onExperience(tastingNotes, rating, consumedDate);
             onClose(); // Close on success
         } catch (err) {
             setModalError(`Failed to save experience: ${err.message}`);
