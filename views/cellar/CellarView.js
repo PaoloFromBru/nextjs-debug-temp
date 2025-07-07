@@ -21,7 +21,8 @@ const CellarView = ({
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-semibold text-slate-800 dark:text-slate-100">My Wine Cellar</h1>
-        <AddWineButton onAdd={() => handleOpenWineForm(null)} />
+        {/* Pass an empty object so the modal opens for adding a new wine */}
+        <AddWineButton onAdd={() => handleOpenWineForm({})} />
       </div>
 
       {(isLoading || isLoadingAction) && (
