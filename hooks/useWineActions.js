@@ -187,5 +187,6 @@ export default function useWineActions(db, userId, appId, setError) {
     handleEraseAllWines,
     isLoadingAction,
     actionError,
+    setActionError,
   };
 }
