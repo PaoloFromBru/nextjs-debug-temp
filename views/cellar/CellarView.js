@@ -37,7 +37,7 @@ const CellarView = ({
               key={wine.id}
               wine={wine}
               onEdit={() => handleOpenWineForm(wine)}
-              onExperience={() => confirmExperienceWine(wine.id)}
+              onExperience={() => confirmExperienceWine(wine)}
               onPairFood={() => handleOpenFoodPairing(wine)}
             />
           ))}
