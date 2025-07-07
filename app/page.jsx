@@ -131,7 +131,7 @@ export default function HomePage() {
             wines={wines}
             isLoadingAction={isLoadingAction}
             handleOpenWineForm={wine => setWineToEdit(wine)}
-            confirmExperienceWine={id => setWineToExperience(id)}
+            confirmExperienceWine={wine => setWineToExperience(wine)}
             handleOpenFoodPairing={wine => setPairingWine(wine)}
           />
         )}
@@ -141,7 +141,7 @@ export default function HomePage() {
             wines={wines}
             // callbacks to open modal or trigger actions
             handleOpenWineForm={wine => setWineToEdit(wine)}
-            confirmExperienceWine={id => setWineToExperience(id)}
+            confirmExperienceWine={wine => setWineToExperience(wine)}
             handleOpenFoodPairing={wine => setPairingWine(wine)}
             isLoadingAction={isLoadingAction}
             error={actionError}
@@ -200,8 +200,8 @@ export default function HomePage() {
         <ExperienceWineModal
           isOpen
           onClose={()=>setWineToExperience(null)}
-          wineId={wineToExperience}
-          onConfirm={(notes,rating,date) => handleExperienceWine(wineToExperience,notes,rating,date,wines)}
+          wine={wineToExperience}
+          onExperience={(notes,rating,date) => handleExperienceWine(wineToExperience.id,notes,rating,date,wines)}
         />
       )}
       {pairingWine && (
