@@ -139,26 +139,13 @@ export default function HomePage() {
           <DrinkSoonView
             // ◀ PASS the full list
             wines={wines}
-            // callbacks to open/close/modal control
+            // callbacks to open modal or trigger actions
             handleOpenWineForm={wine => setWineToEdit(wine)}
             confirmExperienceWine={id => setWineToExperience(id)}
             handleOpenFoodPairing={wine => setPairingWine(wine)}
             isLoadingAction={isLoadingAction}
             error={actionError}
             setError={setActionError}
-
-            // the modal state you already have:
-            wineFormOpen={!!wineToEdit}
-            onWineFormClose={() => setWineToEdit(null)}
-            experienceOpen={!!wineToExperience}
-            onExperienceClose={() => setWineToExperience(null)}
-            foodPairingOpen={!!pairingWine}
-            onFoodPairingClose={() => setPairingWine(null)}
-
-            // selected items:
-            selectedWine={wineToEdit}
-            selectedExperienceWineId={wineToExperience}
-            selectedPairingWine={pairingWine}
 			/>
         )}
         {view==='experienced' && (
