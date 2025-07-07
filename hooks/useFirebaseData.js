@@ -125,6 +125,7 @@ export const useFirebaseData = () => {
     user,
     userId,
     isAuthReady,
+    db,
     wines,
     experiencedWines,
     isLoadingData,

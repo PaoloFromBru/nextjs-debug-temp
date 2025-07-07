@@ -131,7 +131,7 @@ export default function HomePage() {
             wines={wines}
             isLoadingAction={isLoadingAction}
             handleOpenWineForm={wine => setWineToEdit(wine)}
-            confirmExperienceWine={id => setWineToExperience(id)}
+            confirmExperienceWine={wine => setWineToExperience(wine)}
             handleOpenFoodPairing={wine => setPairingWine(wine)}
           />
         )}
@@ -139,26 +139,13 @@ export default function HomePage() {
           <DrinkSoonView
             // ◀ PASS the full list
             wines={wines}
-            // callbacks to open/close/modal control
+            // callbacks to open modal or trigger actions
             handleOpenWineForm={wine => setWineToEdit(wine)}
-            confirmExperienceWine={id => setWineToExperience(id)}
+            confirmExperienceWine={wine => setWineToExperience(wine)}
             handleOpenFoodPairing={wine => setPairingWine(wine)}
             isLoadingAction={isLoadingAction}
             error={actionError}
             setError={setActionError}
-
-            // the modal state you already have:
-            wineFormOpen={!!wineToEdit}
-            onWineFormClose={() => setWineToEdit(null)}
-            experienceOpen={!!wineToExperience}
-            onExperienceClose={() => setWineToExperience(null)}
-            foodPairingOpen={!!pairingWine}
-            onFoodPairingClose={() => setPairingWine(null)}
-
-            // selected items:
-            selectedWine={wineToEdit}
-            selectedExperienceWineId={wineToExperience}
-            selectedPairingWine={pairingWine}
 			/>
         )}
         {view==='experienced' && (
@@ -200,7 +187,12 @@ export default function HomePage() {
           isOpen
           onClose={()=>setWineToEdit(null)}
           wine={wineToEdit}
-          onSubmit={data => wineToEdit.id ? handleUpdateWine(wineToEdit.id,data,wines) : handleAddWine(data,wines)}
+          onSubmit={async data => {
+            const res = wineToEdit.id
+              ? await handleUpdateWine(wineToEdit.id, data, wines)
+              : await handleAddWine(data, wines);
+            if (res?.success) setWineToEdit(null);
+          }}
           allWines={wines}
         />
       )}
@@ -208,8 +200,8 @@ export default function HomePage() {
         <ExperienceWineModal
           isOpen
           onClose={()=>setWineToExperience(null)}
-          wineId={wineToExperience}
-          onConfirm={(notes,rating,date) => handleExperienceWine(wineToExperience,notes,rating,date,wines)}
+          wine={wineToExperience}
+          onExperience={(notes,rating,date) => handleExperienceWine(wineToExperience.id,notes,rating,date,wines)}
         />
       )}
       {pairingWine && (
