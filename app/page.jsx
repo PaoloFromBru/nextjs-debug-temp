@@ -15,7 +15,6 @@ import HelpView from '@/views/help/HelpView';
 import WineFormModal from '@/components/WineFormModal';
 import ExperienceWineModal from '@/components/ExperienceWineModal';
 import FoodPairingModal from '@/components/FoodPairingModal';
-import ReverseFoodPairingModal from '@/components/ReverseFoodPairingModal';
 import AuthModal from '@/components/AuthModal';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import AlertMessage from '@/components/AlertMessage';
@@ -57,7 +56,8 @@ export default function HomePage() {
     handleDeleteExperiencedWine,
     handleEraseAllWines,
     isLoadingAction,
-    actionError
+    actionError,
+    setActionError
   } = useWineActions(db, user?.uid, appId, msg => setCsvImportStatus({ message: msg, type: 'error', errors: [] }));
 
   // Global error
@@ -130,9 +130,9 @@ export default function HomePage() {
           <CellarView
             wines={wines}
             isLoadingAction={isLoadingAction}
-            addWine={w=>handleAddWine(w,wines)}
-            updateWine={(id,d)=>handleUpdateWine(id,d,wines)}
-            deleteWine={handleDeleteWine}
+            handleOpenWineForm={wine => setWineToEdit(wine)}
+            confirmExperienceWine={id => setWineToExperience(id)}
+            handleOpenFoodPairing={wine => setPairingWine(wine)}
           />
         )}
         {view==='drinksoon' && (
@@ -145,9 +145,7 @@ export default function HomePage() {
             handleOpenFoodPairing={wine => setPairingWine(wine)}
             isLoadingAction={isLoadingAction}
             error={actionError}
-            setError={msg => {/* clear or set actionError state */}
-              /* e.g. setActionError(msg) */
-            }
+            setError={setActionError}
 
             // the modal state you already have:
             wineFormOpen={!!wineToEdit}

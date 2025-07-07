@@ -11,9 +11,9 @@ const CellarView = ({
   wines = [],
   isLoading = false, // ✅ Accept isLoading prop
   isLoadingAction,
-  addWine,
-  updateWine,
-  deleteWine,
+  handleOpenWineForm,
+  confirmExperienceWine,
+  handleOpenFoodPairing,
 }) => {
   const allWines = wines;
 
@@ -21,7 +21,7 @@ const CellarView = ({
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-semibold text-slate-800 dark:text-slate-100">My Wine Cellar</h1>
-        <AddWineButton onAdd={addWine} />
+        <AddWineButton onAdd={() => handleOpenWineForm(null)} />
       </div>
 
       {(isLoading || isLoadingAction) && (
@@ -36,8 +36,9 @@ const CellarView = ({
             <WineItem
               key={wine.id}
               wine={wine}
-              onUpdate={updateWine}
-              onDelete={deleteWine}
+              onEdit={() => handleOpenWineForm(wine)}
+              onExperience={() => confirmExperienceWine(wine.id)}
+              onPairFood={() => handleOpenFoodPairing(wine)}
             />
           ))}
         </div>

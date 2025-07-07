@@ -98,7 +98,7 @@ const DrinkSoonView = ({
         wine={selectedPairingWine}
       />
 
-      <AlertMessage error={error} onClose={() => setError(null)} />
+      <AlertMessage message={error} type="error" onDismiss={() => setError(null)} />
     </>
   );
 };

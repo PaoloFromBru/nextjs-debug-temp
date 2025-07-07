@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import ExperiencedWineItem from '@/components/ExperiencedWineItem';
 import { useFirebaseData, useWineActions } from '@/hooks';
 import AlertMessage from '@/components/AlertMessage';
@@ -12,33 +12,37 @@ const CheckCircleIcon = ({ className = "w-5 h-5" }) => (
   </svg>
 );
 
-const ExperiencedWinesView = () => {
+const ExperiencedWinesView = ({ experiencedWines: experiencedWinesProp, onDelete }) => {
   const {
     db,
     user,
     appId,
     experiencedWines,
-    error,
-    setError
+    dataError
   } = useFirebaseData();
+
+  const [error, setError] = useState(null);
 
   const { isLoadingAction, deleteExperiencedWine } = useWineActions(db, user?.uid, appId, setError);
 
+  const wines = experiencedWinesProp || experiencedWines;
+  const handleDelete = onDelete || ((id) => deleteExperiencedWine(id));
+
   useEffect(() => {
-    console.log("DEBUG: Experienced wines received:", experiencedWines.map(w => ({ id: w.id, name: w.name || w.producer })));
-  }, [experiencedWines]);
+    console.log("DEBUG: Experienced wines received:", wines.map(w => ({ id: w.id, name: w.name || w.producer })));
+  }, [wines]);
 
   return (
     <>
       <h2 className="text-2xl font-semibold text-slate-700 dark:text-slate-200 mb-4 mt-8">Experienced Wines</h2>
 
-      {experiencedWines.length > 0 ? (
+      {wines.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {experiencedWines.map(wine => (
+          {wines.map(wine => (
             <ExperiencedWineItem
               key={wine.id}
               wine={wine}
-              onDelete={() => deleteExperiencedWine(wine.id)}
+              onDelete={() => handleDelete(wine.id)}
               loading={isLoadingAction}
             />
           ))}
@@ -51,7 +55,11 @@ const ExperiencedWinesView = () => {
         </div>
       )}
 
-      <AlertMessage error={error} onClose={() => setError(null)} />
+      <AlertMessage
+        message={dataError || error}
+        type="error"
+        onDismiss={() => setError(null)}
+      />
     </>
   );
 };
