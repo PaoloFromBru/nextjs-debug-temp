@@ -89,7 +89,6 @@ export default function HomePage() {
     setShowReversePairingModal(true);
     await findWineForFood(foodForReversePairing, wines);
   };
-
   const fetchFoodPairing = async (wine) => {
     if (!wine) return;
     setIsLoadingPairing(true);
