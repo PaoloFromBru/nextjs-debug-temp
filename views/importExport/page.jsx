@@ -3,13 +3,14 @@
 
 import { useState } from 'react';
 import ImportExportView from '@/views/importExport/ImportExportView';
+import { useFirebaseData } from '@/hooks';
+import { exportToCsv } from '@/utils';
 
 export default function ImportExportPage() {
   const [csvFile, setCsvFile] = useState(null);
   const [isImportingCsv, setIsImportingCsv] = useState(false);
   const [csvImportStatus, setCsvImportStatus] = useState({ message: '', type: '', errors: [] });
-  const [wines, setWines] = useState([]);
-  const [experiencedWines, setExperiencedWines] = useState([]);
+  const { wines, experiencedWines } = useFirebaseData();
 
   const handleCsvFileChange = (e) => setCsvFile(e.target.files[0]);
 
@@ -21,11 +22,10 @@ export default function ImportExportPage() {
     }, 1500);
   };
 
-  const handleExportCsv = () => alert('Exporting current cellar...');
-  const handleExportExperiencedCsv = () => alert('Exporting experienced wines...');
+  const handleExportCsv = () => exportToCsv(wines, 'my_cellar');
+  const handleExportExperiencedCsv = () => exportToCsv(experiencedWines, 'experienced_wines', undefined, true);
   const confirmEraseAllWines = () => {
     if (confirm('Are you sure you want to erase all wines? This cannot be undone.')) {
-      setWines([]);
       alert('All wines erased.');
     }
   };
