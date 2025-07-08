@@ -31,6 +31,8 @@ export default function HomePage() {
   const [wineToEdit, setWineToEdit] = useState(null);
   const [wineToExperience, setWineToExperience] = useState(null);
   const [pairingWine, setPairingWine] = useState(null);
+  const [pairingSuggestion, setPairingSuggestion] = useState('');
+  const [isLoadingPairing, setIsLoadingPairing] = useState(false);
 
   // Auth
   const { authError, isLoadingAuth, login, register, logout } = useAuthManager(auth);
@@ -80,6 +82,35 @@ export default function HomePage() {
   };
   const handleExportCsv = () => exportToCsv(wines, 'my_cellar.csv');
   const handleExportExperiencedCsv = () => exportToCsv(experiencedWines, 'experienced_wines.csv');
+
+  const fetchFoodPairing = async (wine) => {
+    if (!wine) return;
+    setIsLoadingPairing(true);
+    setPairingSuggestion('');
+    try {
+      const prompt = `Suggest 1-3 foods that would pair well with the wine: ${wine.producer} ${wine.name ? '(' + wine.name + ')' : ''} ${wine.region} ${wine.year || ''}.`;
+      const res = await fetch('/api/gemini', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: 'user',
+              parts: [{ text: prompt }],
+            },
+          ],
+        }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      const output = data?.candidates?.[0]?.content?.parts?.[0]?.text || 'No suggestion available.';
+      setPairingSuggestion(output);
+    } catch (err) {
+      setPairingSuggestion(`Error: ${err.message}`);
+    } finally {
+      setIsLoadingPairing(false);
+    }
+  };
 
   // Loading state
   if (isLoadingAuth || !isAuthReady || isLoadingData) {
@@ -207,8 +238,11 @@ export default function HomePage() {
       {pairingWine && (
         <FoodPairingModal
           isOpen
-          onClose={()=>setPairingWine(null)}
+          onClose={() => { setPairingWine(null); setPairingSuggestion(''); }}
           wine={pairingWine}
+          suggestion={pairingSuggestion}
+          isLoading={isLoadingPairing}
+          onFetchPairing={() => fetchFoodPairing(pairingWine)}
         />
       )}
       {showAuthModal && (
