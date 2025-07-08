@@ -39,7 +39,7 @@ export default function ImportExportView({
         <h2 className="text-xl font-semibold text-slate-700 dark:text-slate-200 mb-3">
           Import Wines from CSV
         </h2>
-        <div className="flex flex-col sm:flex-row items-end gap-3">
+        <div className="flex flex-col sm:flex-row items-end gap-3 sm:space-x-3">
           <input
             type="file"
             accept=".csv"
@@ -92,7 +92,7 @@ export default function ImportExportView({
         <h2 className="text-xl font-semibold text-slate-700 dark:text-slate-200 mb-3">
           Export Wines to CSV
         </h2>
-        <div className="flex flex-col sm:flex-row items-end gap-3">
+        <div className="flex flex-col sm:flex-row items-end gap-3 sm:space-x-3">
           <button
             onClick={handleExportCsv}
             disabled={wines.length === 0}
