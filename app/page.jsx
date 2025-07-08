@@ -15,6 +15,7 @@ import HelpView from '@/views/help/HelpView';
 import WineFormModal from '@/components/WineFormModal';
 import ExperienceWineModal from '@/components/ExperienceWineModal';
 import FoodPairingModal from '@/components/FoodPairingModal';
+import ReverseFoodPairingModal from '@/components/ReverseFoodPairingModal';
 import AuthModal from '@/components/AuthModal';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import AlertMessage from '@/components/AlertMessage';
@@ -33,6 +34,7 @@ export default function HomePage() {
   const [pairingWine, setPairingWine] = useState(null);
   const [pairingSuggestion, setPairingSuggestion] = useState('');
   const [isLoadingPairing, setIsLoadingPairing] = useState(false);
+  const [showReversePairingModal, setShowReversePairingModal] = useState(false);
 
   // Auth
   const { authError, isLoadingAuth, login, register, logout } = useAuthManager(auth);
@@ -83,6 +85,10 @@ export default function HomePage() {
   const handleExportCsv = () => exportToCsv(wines, 'my_cellar.csv');
   const handleExportExperiencedCsv = () => exportToCsv(experiencedWines, 'experienced_wines.csv');
 
+  const handleFindWineForFood = async () => {
+    setShowReversePairingModal(true);
+    await findWineForFood(foodForReversePairing, wines);
+  };
   const fetchFoodPairing = async (wine) => {
     if (!wine) return;
     setIsLoadingPairing(true);
@@ -189,7 +195,7 @@ export default function HomePage() {
           <FoodPairingView
             foodForReversePairing={foodForReversePairing}
             setFoodForReversePairing={setFoodForReversePairing}
-            handleFindWineForFood={() => findWineForFood(foodForReversePairing,wines)}
+            handleFindWineForFood={handleFindWineForFood}
             isLoadingReversePairing={isLoadingAI}
             wines={wines}
           />
@@ -243,6 +249,15 @@ export default function HomePage() {
           suggestion={pairingSuggestion}
           isLoading={isLoadingPairing}
           onFetchPairing={() => fetchFoodPairing(pairingWine)}
+        />
+      )}
+      {showReversePairingModal && (
+        <ReverseFoodPairingModal
+          isOpen
+          onClose={() => setShowReversePairingModal(false)}
+          foodItem={foodForReversePairing}
+          suggestion={reversePairing}
+          isLoading={isLoadingAI}
         />
       )}
       {showAuthModal && (
