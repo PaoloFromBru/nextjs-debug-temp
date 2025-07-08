@@ -98,7 +98,7 @@ export default function ImportExportView({
             disabled={wines.length === 0}
             className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded disabled:opacity-60 flex items-center space-x-2"
           >
-            <UploadIcon className="rotate-180" />
+            <UploadIcon className="w-5 h-5 rotate-180" />
             <span>Export Cellar</span>
           </button>
           <button
@@ -106,7 +106,7 @@ export default function ImportExportView({
             disabled={experiencedWines.length === 0}
             className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded disabled:opacity-60 flex items-center space-x-2"
           >
-            <UploadIcon className="rotate-180" />
+            <UploadIcon className="w-5 h-5 rotate-180" />
             <span>Export Experienced Wines</span>
           </button>
         </div>
