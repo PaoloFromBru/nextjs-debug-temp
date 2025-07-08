@@ -53,6 +53,20 @@ export default function ImportExportView({
           >
             {isImportingCsv ? 'Importing...' : 'Import CSV'}
           </button>
+          <button
+            onClick={handleExportCsv}
+            disabled={wines.length === 0}
+            className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded disabled:opacity-60"
+          >
+            Export Cellar
+          </button>
+          <button
+            onClick={handleExportExperiencedCsv}
+            disabled={experiencedWines.length === 0}
+            className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded disabled:opacity-60"
+          >
+            Export Experienced
+          </button>
         </div>
         {message && (
           <div className="mt-4">
@@ -71,36 +85,6 @@ export default function ImportExportView({
             />
           </div>
         )}
-      </section>
-
-      {/* Export Active */}
-      <section className="mb-8 p-6 bg-white dark:bg-slate-800 rounded-lg shadow">
-        <h2 className="text-xl font-semibold text-slate-700 dark:text-slate-200 mb-3">
-          Export Wines to CSV
-        </h2>
-        <button
-          onClick={handleExportCsv}
-          disabled={wines.length === 0}
-          className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded disabled:opacity-60 flex items-center space-x-2"
-        >
-          <UploadIcon className="rotate-180" />
-          <span>Export Cellar</span>
-        </button>
-      </section>
-
-      {/* Export Experienced */}
-      <section className="mb-8 p-6 bg-white dark:bg-slate-800 rounded-lg shadow">
-        <h2 className="text-xl font-semibold text-slate-700 dark:text-slate-200 mb-3">
-          Export Experienced Wines
-        </h2>
-        <button
-          onClick={handleExportExperiencedCsv}
-          disabled={experiencedWines.length === 0}
-          className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded disabled:opacity-60 flex items-center space-x-2"
-        >
-          <UploadIcon className="rotate-180" />
-          <span>Export Experienced</span>
-        </button>
       </section>
 
       {/* Danger Zone */}
