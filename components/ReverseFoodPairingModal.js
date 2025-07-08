@@ -22,7 +22,7 @@ const ReverseFoodPairingModal = ({ isOpen, onClose, foodItem, suggestion, isLoad
             )}
             {!isLoading && suggestion && (
                 <div className="p-4 bg-blue-50 dark:bg-blue-900/30 rounded-md border border-blue-200 dark:border-blue-700">
-                    <h4 className="font-semibold text-blue-800 dark:text-blue-300 mb-2">For "{foodItem}":</h4>
+                    <h4 className="font-semibold text-blue-800 dark:text-blue-300 mb-2">For &quot;{foodItem}&quot;:</h4>
                     <p className="text-slate-700 dark:text-blue-200 whitespace-pre-wrap">{suggestion}</p>
                 </div>
             )}
