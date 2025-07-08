@@ -87,6 +87,60 @@ export default function useWineActions(db, userId, appId, setError) {
     }
   };
 
+  const handleUpdateExperiencedWine = async (experiencedWineId, wineData) => {
+    if (!db || !userId) return errorOut('Database not ready or user not logged in.');
+    setIsLoadingAction(true);
+    try {
+      const experiencedWineDocRef = doc(db, experiencedWinesCollectionPath, experiencedWineId);
+      await updateDoc(experiencedWineDocRef, {
+        ...wineData,
+        year: wineData?.year ? parseInt(wineData.year, 10) : null,
+        drinkingWindowStartYear: wineData?.drinkingWindowStartYear ? parseInt(wineData.drinkingWindowStartYear, 10) : null,
+        drinkingWindowEndYear: wineData?.drinkingWindowEndYear ? parseInt(wineData.drinkingWindowEndYear, 10) : null,
+        consumedAt: wineData?.consumedDate ? Timestamp.fromDate(new Date(wineData.consumedDate)) : Timestamp.now(),
+      });
+      return { success: true };
+    } catch (err) {
+      return errorOut(`Failed to update experienced wine: ${err.message}`, err);
+    } finally {
+      setIsLoadingAction(false);
+    }
+  };
+
+  const handleRestoreExperiencedWine = async (experiencedWineId, wineData, allWines) => {
+    if (!db || !userId) return errorOut('Database not ready or user not logged in.');
+    setIsLoadingAction(true);
+    try {
+      const newLoc = String(wineData?.location || '').trim().toLowerCase();
+      const isLocationTaken = allWines.some(w => String(w.location || '').trim().toLowerCase() === newLoc);
+      if (isLocationTaken) return errorOut(`Location "${wineData.location}" is already in use.`);
+
+      const expDocRef = doc(db, experiencedWinesCollectionPath, experiencedWineId);
+      const wineDocRef = doc(db, winesCollectionPath, experiencedWineId);
+      const baseData = {
+        name: wineData.name || '',
+        producer: wineData.producer || '',
+        year: wineData.year ? parseInt(wineData.year, 10) : null,
+        region: wineData.region || '',
+        color: wineData.color || 'red',
+        location: wineData.location || '',
+        drinkingWindowStartYear: wineData.drinkingWindowStartYear ? parseInt(wineData.drinkingWindowStartYear, 10) : null,
+        drinkingWindowEndYear: wineData.drinkingWindowEndYear ? parseInt(wineData.drinkingWindowEndYear, 10) : null,
+        addedAt: wineData.addedAt || Timestamp.now(),
+      };
+
+      const batch = writeBatch(db);
+      batch.set(wineDocRef, baseData);
+      batch.delete(expDocRef);
+      await batch.commit();
+      return { success: true };
+    } catch (err) {
+      return errorOut(`Failed to restore wine: ${err.message}`, err);
+    } finally {
+      setIsLoadingAction(false);
+    }
+  };
+
   // ... other handlers (experience, delete, erase) unchanged ...
 
 
@@ -181,6 +235,8 @@ export default function useWineActions(db, userId, appId, setError) {
   return {
     handleAddWine,
     handleUpdateWine,
+    handleUpdateExperiencedWine,
+    handleRestoreExperiencedWine,
     handleExperienceWine,
     handleDeleteWine,
     handleDeleteExperiencedWine,

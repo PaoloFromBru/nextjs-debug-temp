@@ -4,6 +4,7 @@ export { default as WineItem } from './WineItem';
 export { default as WineFormModal } from './WineFormModal';
 export { default as ExperienceWineModal } from './ExperienceWineModal';
 export { default as ExperiencedWineItem } from './ExperiencedWineItem';
+export { default as EditExperiencedWineModal } from './EditExperiencedWineModal';
 export { default as ReverseFoodPairingModal } from './ReverseFoodPairingModal';
 export { default as FoodPairingModal } from './FoodPairingModal';
 export { default as Modal } from './Modal';

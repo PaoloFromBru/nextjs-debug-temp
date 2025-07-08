@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import ExperiencedWineItem from '@/components/ExperiencedWineItem';
 import { useFirebaseData, useWineActions } from '@/hooks';
+import EditExperiencedWineModal from '@/components/EditExperiencedWineModal';
 import AlertMessage from '@/components/AlertMessage';
 
 // --- Icons ---
@@ -18,31 +19,34 @@ const ExperiencedWinesView = ({ experiencedWines: experiencedWinesProp, onDelete
     user,
     appId,
     experiencedWines,
+    wines: cellarWines,
     dataError
   } = useFirebaseData();
 
   const [error, setError] = useState(null);
+  const [wineToEdit, setWineToEdit] = useState(null);
 
-  const { isLoadingAction, deleteExperiencedWine } = useWineActions(db, user?.uid, appId, setError);
+  const { isLoadingAction, deleteExperiencedWine, handleUpdateExperiencedWine, handleRestoreExperiencedWine } = useWineActions(db, user?.uid, appId, setError);
 
-  const wines = experiencedWinesProp || experiencedWines;
+  const winesList = experiencedWinesProp || experiencedWines;
   const handleDelete = onDelete || ((id) => deleteExperiencedWine(id));
 
   useEffect(() => {
-    console.log("DEBUG: Experienced wines received:", wines.map(w => ({ id: w.id, name: w.name || w.producer })));
-  }, [wines]);
+    console.log("DEBUG: Experienced wines received:", winesList.map(w => ({ id: w.id, name: w.name || w.producer })));
+  }, [winesList]);
 
   return (
     <>
       <h2 className="text-2xl font-semibold text-slate-700 dark:text-slate-200 mb-4 mt-8">Experienced Wines</h2>
 
-      {wines.length > 0 ? (
+      {winesList.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {wines.map(wine => (
+          {winesList.map(wine => (
             <ExperiencedWineItem
               key={wine.id}
               wine={wine}
               onDelete={() => handleDelete(wine.id)}
+              onEdit={() => setWineToEdit(wine)}
               loading={isLoadingAction}
             />
           ))}
@@ -60,6 +64,21 @@ const ExperiencedWinesView = ({ experiencedWines: experiencedWinesProp, onDelete
         type="error"
         onDismiss={() => setError(null)}
       />
+      {wineToEdit && (
+        <EditExperiencedWineModal
+          isOpen
+          wine={wineToEdit}
+          onClose={() => setWineToEdit(null)}
+          onSubmit={async data => {
+            const res = await handleUpdateExperiencedWine(wineToEdit.id, data);
+            if (res?.success) setWineToEdit(null);
+          }}
+          onMoveBack={async data => {
+            const res = await handleRestoreExperiencedWine(wineToEdit.id, data, cellarWines);
+            if (res?.success) setWineToEdit(null);
+          }}
+        />
+      )}
     </>
   );
 };
