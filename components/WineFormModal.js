@@ -1,7 +1,8 @@
 // src/components/WineFormModal.js
-import React, { useState, useEffect } from 'react'; // Removed useRef
-// Removed Webcam import
-// Removed getFunctions, httpsCallable, getApp, getAuth imports
+'use client';
+
+import React, { useState, useEffect, useRef } from 'react';
+import { parseLabelText } from '@/utils/labelParser';
 import Modal from './Modal.js';
 import AlertMessage from './AlertMessage.js';
 
@@ -17,13 +18,8 @@ const WineFormModal = ({ isOpen, onClose, onSubmit, wine, allWines }) => {
         drinkingWindowEndYear: ''
     });
     const [formError, setFormError] = useState('');
-
-    // Removed isScanning state
-    // Removed webcamRef
-    // Removed canvasRef
-    // Removed isProcessingImage state
-    // Removed scanResult state
-    // Removed webcamKey state
+    const [isProcessingImage, setIsProcessingImage] = useState(false);
+    const fileInputRef = useRef(null);
 
     // Removed functions, callScanWineLabelFunction, auth initializations
 
@@ -52,6 +48,35 @@ const WineFormModal = ({ isOpen, onClose, onSubmit, wine, allWines }) => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleSelectImage = () => {
+        if (fileInputRef.current) {
+            fileInputRef.current.click();
+        }
+    };
+
+    const handleImageChange = async (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        setIsProcessingImage(true);
+        try {
+            const { createWorker } = await import('tesseract.js');
+            const worker = createWorker();
+            await worker.load();
+            await worker.loadLanguage('eng');
+            await worker.initialize('eng');
+            const { data: { text } } = await worker.recognize(file);
+            await worker.terminate();
+            const parsed = parseLabelText(text);
+            setFormData(prev => ({ ...prev, ...parsed }));
+        } catch (err) {
+            console.error('Label scan error', err);
+            setFormError('Failed to read wine label.');
+        } finally {
+            setIsProcessingImage(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
     };
 
     const handleSubmit = (e) => {
@@ -178,6 +203,24 @@ const WineFormModal = ({ isOpen, onClose, onSubmit, wine, allWines }) => {
                         </select>
                     </div>
                     <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Scan Label (Optional)</label>
+                        <input
+                            type="file"
+                            accept="image/*"
+                            capture="environment"
+                            ref={fileInputRef}
+                            onChange={handleImageChange}
+                            className="hidden"
+                        />
+                        <button
+                            type="button"
+                            onClick={handleSelectImage}
+                            className="px-3 py-2 bg-slate-100 dark:bg-slate-600 hover:bg-slate-200 dark:hover:bg-slate-500 rounded-md border border-slate-300 dark:border-slate-500 text-sm"
+                        >
+                            {isProcessingImage ? 'Scanning...' : 'Take or Upload Photo'}
+                        </button>
+                    </div>
+                    <div>
                         <label htmlFor="location" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Cellar Location <span className="text-red-500">*</span></label>
                         <input
                             type="text"
@@ -243,5 +286,4 @@ const WineFormModal = ({ isOpen, onClose, onSubmit, wine, allWines }) => {
         </Modal>
     );
 };
-
 export default WineFormModal;
