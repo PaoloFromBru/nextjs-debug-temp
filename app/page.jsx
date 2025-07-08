@@ -35,6 +35,7 @@ export default function HomePage() {
   const [pairingSuggestion, setPairingSuggestion] = useState('');
   const [isLoadingPairing, setIsLoadingPairing] = useState(false);
   const [showReversePairingModal, setShowReversePairingModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Auth
   const { authError, isLoadingAuth, login, register, logout } = useAuthManager(auth);
@@ -47,6 +48,16 @@ export default function HomePage() {
     const current = new Date().getFullYear();
     return wines.filter(w => w.drinkingWindowEndYear && w.drinkingWindowEndYear <= current);
   }, [wines]);
+
+  const filteredWines = useMemo(() => {
+    if (!searchTerm) return wines;
+    const term = searchTerm.toLowerCase();
+    return wines.filter(w =>
+      [w.name, w.producer, w.region, w.color, w.location, w.year && String(w.year)]
+        .filter(Boolean)
+        .some(val => String(val).toLowerCase().includes(term))
+    );
+  }, [wines, searchTerm]);
 
   // Reverse pairing AI
   const { callGeminiProxy: findWineForFood, response: reversePairing, loading: isLoadingAI, error: pairingError } = useFoodPairingAI();
@@ -148,7 +159,7 @@ export default function HomePage() {
       {globalError && <AlertMessage message={globalError} type="error" onDismiss={() => {}} />}
 
       {/* Navigation */}
-      <nav className="flex space-x-2 p-4 bg-white dark:bg-slate-800">
+      <nav className="flex space-x-2 p-4 bg-white dark:bg-slate-800 overflow-x-auto whitespace-nowrap">
         {[
           ['cellar','Cellar'],
           ['drinksoon','Drink Soon'],
@@ -160,12 +171,15 @@ export default function HomePage() {
           <button key={key} onClick={() => setView(key)} className={`px-3 py-1 rounded ${view===key?'bg-blue-600 text-white':'bg-gray-200 dark:bg-slate-700'}`}>{label}</button>
         ))}
       </nav>
+      <div className="p-4 bg-white dark:bg-slate-800">
+        <input type="text" placeholder="Search wines..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full max-w-md p-2 border border-slate-300 dark:border-slate-600 rounded focus:outline-none" />
+      </div>
 
       {/* Main Content */}
       <main className="p-6 space-y-10">
         {view==='cellar' && (
           <CellarView
-            wines={wines}
+            wines={filteredWines}
             isLoadingAction={isLoadingAction}
             handleOpenWineForm={wine => setWineToEdit(wine)}
             confirmExperienceWine={wine => setWineToExperience(wine)}
@@ -175,7 +189,7 @@ export default function HomePage() {
         {view==='drinksoon' && (
           <DrinkSoonView
             // ◀ PASS the full list
-            wines={wines}
+            wines={filteredWines}
             // callbacks to open modal or trigger actions
             handleOpenWineForm={wine => setWineToEdit(wine)}
             confirmExperienceWine={wine => setWineToExperience(wine)}
