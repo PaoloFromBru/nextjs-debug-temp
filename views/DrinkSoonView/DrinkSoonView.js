@@ -23,10 +23,12 @@ const DrinkSoonView = ({
   // Compute wines approaching end based on drinkingWindowEndYear
   const winesApproachingEnd = useMemo(() => {
     const currentYear = new Date().getFullYear();
-    return wines.filter(wine => {
-      const end = wine.drinkingWindowEndYear;
-      return typeof end === 'number' && end <= currentYear;
-    });
+    return wines
+      .filter(wine => {
+        const end = wine.drinkingWindowEndYear;
+        return typeof end === 'number' && end <= currentYear;
+      })
+      .sort((a, b) => (a.drinkingWindowEndYear || 0) - (b.drinkingWindowEndYear || 0));
   }, [wines]);
 
   useEffect(() => {
