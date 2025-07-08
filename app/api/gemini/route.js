@@ -1,33 +1,39 @@
-export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method Not Allowed. Use POST.' });
-  }
+import { NextResponse } from 'next/server';
 
+export async function POST(request) {
   const apiKey = process.env.GEMINI_API_KEY;
 
   if (!apiKey) {
-    return res.status(500).json({ error: 'Missing Gemini API key in environment variables.' });
+    return NextResponse.json(
+      { error: 'Missing Gemini API key in environment variables.' },
+      { status: 500 }
+    );
   }
 
   const geminiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
   try {
+    const body = await request.json();
     const geminiRes = await fetch(geminiUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(req.body),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
     });
 
     if (!geminiRes.ok) {
       const errorText = await geminiRes.text();
-      return res.status(geminiRes.status).json({ error: `Gemini API Error: ${errorText}` });
+      return NextResponse.json(
+        { error: `Gemini API Error: ${errorText}` },
+        { status: geminiRes.status }
+      );
     }
 
     const data = await geminiRes.json();
-    return res.status(200).json(data);
+    return NextResponse.json(data, { status: 200 });
   } catch (err) {
-    return res.status(500).json({ error: `Proxy Error: ${err.message}` });
+    return NextResponse.json(
+      { error: `Proxy Error: ${err.message}` },
+      { status: 500 }
+    );
   }
 }
