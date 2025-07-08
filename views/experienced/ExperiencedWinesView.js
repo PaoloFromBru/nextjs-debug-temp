@@ -53,7 +53,7 @@ const ExperiencedWinesView = ({ experiencedWines: experiencedWinesProp, onDelete
         </div>
       ) : (
         <div className="text-center p-10 bg-white dark:bg-slate-800 rounded-lg shadow-md mt-6">
-          <CheckCircleIcon className="w-16 h-16 mx-auto text-slate-400 dark:text-slate-500 mb-4" />
+          <CheckCircleIcon className="w-6 h-6 mx-auto text-slate-400 dark:text-slate-500 mb-4" />
           <h3 className="text-xl font-semibold mb-2 text-slate-700 dark:text-slate-200">No experienced wines yet.</h3>
           <p className="text-slate-500 dark:text-slate-400">When you drink a wine, it will appear here!</p>
         </div>
