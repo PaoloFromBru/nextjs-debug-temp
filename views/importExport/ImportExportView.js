@@ -53,6 +53,20 @@ export default function ImportExportView({
           >
             {isImportingCsv ? 'Importing...' : 'Import CSV'}
           </button>
+          <button
+            onClick={handleExportCsv}
+            disabled={wines.length === 0}
+            className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded disabled:opacity-60"
+          >
+            Export Cellar
+          </button>
+          <button
+            onClick={handleExportExperiencedCsv}
+            disabled={experiencedWines.length === 0}
+            className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded disabled:opacity-60"
+          >
+            Export Experienced
+          </button>
         </div>
         {message && (
           <div className="mt-4">
@@ -97,7 +111,6 @@ export default function ImportExportView({
           </button>
         </div>
       </section>
-
       {/* Danger Zone */}
       <section className="p-6 bg-white dark:bg-slate-800 rounded-lg shadow border border-red-300 dark:border-red-700">
         <h2 className="text-xl font-semibold text-red-700 dark:text-red-300 mb-3">
