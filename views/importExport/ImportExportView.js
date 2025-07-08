@@ -87,6 +87,30 @@ export default function ImportExportView({
         )}
       </section>
 
+      {/* Export */}
+      <section className="mb-8 p-6 bg-white dark:bg-slate-800 rounded-lg shadow">
+        <h2 className="text-xl font-semibold text-slate-700 dark:text-slate-200 mb-3">
+          Export Wines to CSV
+        </h2>
+        <div className="flex flex-col sm:flex-row items-end gap-3">
+          <button
+            onClick={handleExportCsv}
+            disabled={wines.length === 0}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded disabled:opacity-60 flex items-center space-x-2"
+          >
+            <UploadIcon className="rotate-180" />
+            <span>Export Cellar</span>
+          </button>
+          <button
+            onClick={handleExportExperiencedCsv}
+            disabled={experiencedWines.length === 0}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded disabled:opacity-60 flex items-center space-x-2"
+          >
+            <UploadIcon className="rotate-180" />
+            <span>Export Experienced Wines</span>
+          </button>
+        </div>
+      </section>
       {/* Danger Zone */}
       <section className="p-6 bg-white dark:bg-slate-800 rounded-lg shadow border border-red-300 dark:border-red-700">
         <h2 className="text-xl font-semibold text-red-700 dark:text-red-300 mb-3">
