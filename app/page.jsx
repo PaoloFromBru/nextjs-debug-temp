@@ -22,12 +22,6 @@ import AlertMessage from '@/components/AlertMessage';
 import { parseCsv, exportToCsv } from '@/utils';
 
 // --- Local Icons ---
-const DocumentTextIcon = ({ className = "w-8 h-8" }) => (
-  <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
-    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 15h7.5M8.25 18h3.75" />
-  </svg>
-);
 
 const UserIcon = ({ className = "w-4 h-4" }) => (
   <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -191,7 +185,7 @@ export default function HomePage() {
       {/* Header */}
       <header className="p-6 bg-white dark:bg-slate-800 shadow">
         <div className="flex items-center space-x-2 mb-2">
-          <DocumentTextIcon className="text-purple-600" />
+          <WineBottleIcon className="w-6 h-6 text-purple-600" />
           <h1 className="text-3xl font-bold">My Wine Cellar</h1>
         </div>
         <div className="flex items-center justify-between">
