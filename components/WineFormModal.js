@@ -81,7 +81,7 @@ const WineFormModal = ({ isOpen, onClose, onSubmit, wine, allWines }) => {
         setIsFetchingWindow(true);
         setFormError('');
         try {
-            const prompt = `Suggest the ideal drinking window in years for the following wine. Provide the result as \"YYYY-YYYY\" only.\\nProducer: ${formData.producer}\\nName: ${formData.name}\\nYear: ${formData.year}\\nColor: ${formData.color}`;
+            const prompt = `Suggest a conservative drinking window in years for the following wine. The end year should err on the early side. Provide the result as \"YYYY-YYYY\" only.\\nProducer: ${formData.producer}\\nName: ${formData.name}\\nYear: ${formData.year}\\nColor: ${formData.color}`;
             const res = await fetch('/api/gemini', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -162,6 +162,7 @@ const WineFormModal = ({ isOpen, onClose, onSubmit, wine, allWines }) => {
             }
         }
         onSubmit(formData);
+        onClose();
     };
 
     const wineColorOptions = ['red', 'white', 'rose', 'sparkling', 'other'];
