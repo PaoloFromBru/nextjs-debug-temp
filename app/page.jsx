@@ -173,8 +173,8 @@ export default function HomePage() {
     }
   };
 
-  // Loading state
-  if (isLoadingAuth || !isAuthReady || isLoadingData) {
+  // Loading auth state
+  if (isLoadingAuth || !isAuthReady) {
     return (
       <div className="flex items-center justify-center h-screen"><LoadingSpinner /></div>
     );
@@ -230,15 +230,24 @@ export default function HomePage() {
           </button>
         ))}
       </nav>
-      <div className="p-4 bg-white dark:bg-slate-800">
-        <input type="text" placeholder="Search wines..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full max-w-md p-2 border border-slate-300 dark:border-slate-600 rounded focus:outline-none" />
-      </div>
+      {(view==='cellar' || view==='drinksoon') && (
+        <div className="p-4 bg-white dark:bg-slate-800">
+          <input
+            type="text"
+            placeholder="Search wines..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            className="w-full max-w-md p-2 border border-slate-300 dark:border-slate-600 rounded focus:outline-none"
+          />
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="p-6 space-y-10">
         {view==='cellar' && (
           <CellarView
             wines={filteredWines}
+            isLoading={isLoadingData}
             isLoadingAction={isLoadingAction}
             handleOpenWineForm={wine => setWineToEdit(wine)}
             confirmExperienceWine={wine => setWineToExperience(wine)}
