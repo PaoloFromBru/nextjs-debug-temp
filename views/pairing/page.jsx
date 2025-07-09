@@ -25,6 +25,7 @@ export default function FoodPairingPage() {
         handleFindWineForFood={handleFindWineForFood}
         isLoadingReversePairing={isLoadingReversePairing}
         wines={wines}
+        goToCellar={() => alert('Going to cellar')}
       />
     </main>
   );

@@ -20,7 +20,8 @@ const FoodPairingView = ({
   setFoodForReversePairing,
   handleFindWineForFood,
   isLoadingReversePairing,
-  wines
+  wines,
+  goToCellar
 }) => {
   return (
     <>
@@ -68,9 +69,7 @@ const FoodPairingView = ({
           You can also pair individual wines with foods from your main cellar.
         </p>
         <button
-          onClick={() => {
-            // Optional: trigger view switch in parent component
-          }}
+          onClick={goToCellar}
           className="px-4 py-2 rounded-md bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold flex items-center space-x-2"
         >
           <WineBottleIcon className="w-4 h-4" />
