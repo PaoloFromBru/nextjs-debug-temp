@@ -53,20 +53,6 @@ export default function ImportExportView({
           >
             {isImportingCsv ? 'Importing...' : 'Import CSV'}
           </button>
-          <button
-            onClick={handleExportCsv}
-            disabled={wines.length === 0}
-            className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded disabled:opacity-60"
-          >
-            Export Cellar
-          </button>
-          <button
-            onClick={handleExportExperiencedCsv}
-            disabled={experiencedWines.length === 0}
-            className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded disabled:opacity-60"
-          >
-            Export Experienced
-          </button>
         </div>
         {message && (
           <div className="mt-4">
