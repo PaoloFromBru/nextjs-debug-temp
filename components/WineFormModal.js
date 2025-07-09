@@ -19,6 +19,7 @@ const WineFormModal = ({ isOpen, onClose, onSubmit, wine, allWines }) => {
     });
     const [formError, setFormError] = useState('');
     const [isProcessingImage, setIsProcessingImage] = useState(false);
+    const [isFetchingWindow, setIsFetchingWindow] = useState(false);
     const fileInputRef = useRef(null);
 
     // Removed functions, callScanWineLabelFunction, auth initializations
@@ -76,6 +77,43 @@ const WineFormModal = ({ isOpen, onClose, onSubmit, wine, allWines }) => {
         }
     };
 
+    const handleAskDrinkingWindow = async () => {
+        setIsFetchingWindow(true);
+        setFormError('');
+        try {
+            const prompt = `Suggest a conservative drinking window in years for the following wine. The end year should err on the early side. Provide the result as \"YYYY-YYYY\" only.\\nProducer: ${formData.producer}\\nName: ${formData.name}\\nYear: ${formData.year}\\nColor: ${formData.color}`;
+            const res = await fetch('/api/gemini', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [
+                        {
+                            role: 'user',
+                            parts: [{ text: prompt }]
+                        }
+                    ]
+                })
+            });
+            if (!res.ok) throw new Error(await res.text());
+            const data = await res.json();
+            const output = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            const match = output.match(/(\d{4}).*(\d{4})/);
+            if (match) {
+                setFormData(prev => ({
+                    ...prev,
+                    drinkingWindowStartYear: match[1],
+                    drinkingWindowEndYear: match[2]
+                }));
+            } else {
+                setFormError('Unexpected AI response: ' + output);
+            }
+        } catch (err) {
+            setFormError('Failed to fetch window: ' + err.message);
+        } finally {
+            setIsFetchingWindow(false);
+        }
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
         setFormError('');
@@ -124,9 +162,11 @@ const WineFormModal = ({ isOpen, onClose, onSubmit, wine, allWines }) => {
             }
         }
         onSubmit(formData);
+        onClose();
     };
 
     const wineColorOptions = ['red', 'white', 'rose', 'sparkling', 'other'];
+    const canAskAI = formData.name && formData.producer && formData.year && formData.color;
 
     // Removed captureAndSendToCloudFunction function
 
@@ -259,6 +299,16 @@ const WineFormModal = ({ isOpen, onClose, onSubmit, wine, allWines }) => {
                                 />
                             </div>
                         </div>
+                        {canAskAI && (
+                            <button
+                                type="button"
+                                onClick={handleAskDrinkingWindow}
+                                disabled={isFetchingWindow}
+                                className="mt-2 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-md disabled:opacity-50"
+                            >
+                                {isFetchingWindow ? 'Asking AI...' : 'Ask AI for Drinking Window'}
+                            </button>
+                        )}
                     </div>
 
                     <div className="flex justify-end space-x-3 pt-2">
