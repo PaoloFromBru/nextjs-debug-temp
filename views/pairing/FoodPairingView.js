@@ -70,9 +70,9 @@ const FoodPairingView = ({
         </p>
         <button
           onClick={goToCellar}
-          className="px-4 py-2 rounded-md bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold flex items-center space-x-2"
+          className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-md shadow-md hover:shadow-lg transition-all flex items-center justify-center space-x-2"
         >
-          <WineBottleIcon className="w-4 h-4" />
+          <WineBottleIcon className="w-5 h-5" />
           <span>Go to My Cellar to pick a wine</span>
         </button>
       </section>
