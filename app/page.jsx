@@ -17,6 +17,7 @@ import ExperienceWineModal from '@/components/ExperienceWineModal';
 import FoodPairingModal from '@/components/FoodPairingModal';
 import ReverseFoodPairingModal from '@/components/ReverseFoodPairingModal';
 import AuthModal from '@/components/AuthModal';
+import EmailVerificationModal from '@/components/EmailVerificationModal';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import AlertMessage from '@/components/AlertMessage';
 import { parseCsv, exportToCsv } from '@/utils';
@@ -70,6 +71,9 @@ export default function HomePage() {
   const [view, setView] = useState('cellar');
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [isRegister, setIsRegister] = useState(false);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [pendingRegistration, setPendingRegistration] = useState(null);
+  const [verificationError, setVerificationError] = useState('');
   const [csvFile, setCsvFile] = useState(null);
   const [csvImportStatus, setCsvImportStatus] = useState({ message: '', type: '', errors: [] });
   const [foodForReversePairing, setFoodForReversePairing] = useState('');
@@ -121,6 +125,40 @@ export default function HomePage() {
 
   // Global error
   const globalError = dataError || authError || actionError || pairingError;
+
+  const registerWithVerification = async (email, password) => {
+    setVerificationError('');
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    try {
+      const res = await fetch('/api/sendVerificationEmail', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, code })
+      });
+      if (!res.ok) throw new Error('Failed to send verification email');
+      setPendingRegistration({ email, password, code });
+      setShowVerificationModal(true);
+      return { success: true };
+    } catch (err) {
+      setVerificationError(err.message);
+      return { success: false };
+    }
+  };
+
+  const verifyCodeAndRegister = async (enteredCode) => {
+    if (!pendingRegistration) return;
+    if (enteredCode !== pendingRegistration.code) {
+      setVerificationError('Incorrect verification code.');
+      return;
+    }
+    const res = await register(pendingRegistration.email, pendingRegistration.password);
+    if (res?.success) {
+      setShowVerificationModal(false);
+      setPendingRegistration(null);
+    } else {
+      setVerificationError(res.error || 'Registration failed.');
+    }
+  };
 
   // CSV import/export
   const handleImportCsv = async () => {
@@ -352,9 +390,17 @@ export default function HomePage() {
           isRegister={isRegister}
           setIsRegister={setIsRegister}
           onLogin={login}
-          onRegister={register}
+          onRegister={registerWithVerification}
           error={authError}
           loading={isLoadingAuth}
+        />
+      )}
+      {showVerificationModal && (
+        <EmailVerificationModal
+          isOpen
+          onClose={() => setShowVerificationModal(false)}
+          onVerify={verifyCodeAndRegister}
+          error={verificationError}
         />
       )}
     </div>
