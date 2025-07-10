@@ -86,7 +86,7 @@ export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState('');
 
   // Auth
-  const { authError, isLoadingAuth, login, register, logout } = useAuthManager(auth);
+  const { authError, isLoadingAuth, login, register, resetPassword, logout } = useAuthManager(auth);
 
   // Data
   const { user, isAuthReady, wines, experiencedWines, isLoadingData, dataError, db, appId } = useFirebaseData();
@@ -391,6 +391,7 @@ export default function HomePage() {
           setIsRegister={setIsRegister}
           onLogin={login}
           onRegister={registerWithVerification}
+          onPasswordReset={resetPassword}
           error={authError}
           loading={isLoadingAuth}
         />
