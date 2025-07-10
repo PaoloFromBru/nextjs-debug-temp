@@ -13,4 +13,5 @@ export { default as AuthModal } from './AuthModal';
 export { default as LoadingSpinner } from './LoadingSpinner'; // ✅ Add this line
 export { default as EmptyState } from './EmptyState';
 export { default as AddWineButton } from './AddWineButton';
+export { default as PasswordResetModal } from './PasswordResetModal';
 

@@ -3,7 +3,8 @@ import { useState } from 'react';
 import {
   signOut,
   createUserWithEmailAndPassword,
-  signInWithEmailAndPassword
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail
 } from 'firebase/auth';
 
 export const useAuthManager = (authInstance) => {
@@ -48,6 +49,24 @@ export const useAuthManager = (authInstance) => {
     }
   };
 
+  const resetPassword = async (email) => {
+    setIsLoadingAuth(true);
+    setAuthError(null);
+    try {
+      await sendPasswordResetEmail(authInstance, email);
+      return { success: true };
+    } catch (error) {
+      let message = 'Failed to send password reset email.';
+      if (error.code === 'auth/user-not-found') {
+        message = 'No account found with this email.';
+      }
+      setAuthError(message);
+      return { success: false, error: message };
+    } finally {
+      setIsLoadingAuth(false);
+    }
+  };
+
   const logout = async () => {
     setIsLoadingAuth(true);
     setAuthError(null);
@@ -68,6 +87,7 @@ export const useAuthManager = (authInstance) => {
     isLoadingAuth,
     login,
     register,
+    resetPassword,
     logout
   };
 };

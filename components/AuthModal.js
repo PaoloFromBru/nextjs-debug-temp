@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
 import AlertMessage from './AlertMessage';
+import PasswordResetModal from './PasswordResetModal';
 
 const AuthModal = ({
   isOpen,
@@ -11,12 +12,14 @@ const AuthModal = ({
   setIsRegister,
   onLogin,
   onRegister,
+  onPasswordReset,
   error,
   loading
 }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [localError, setLocalError] = useState('');
+  const [showResetModal, setShowResetModal] = useState(false);
 
   // Reset fields when the modal closes
   useEffect(() => {
@@ -24,6 +27,7 @@ const AuthModal = ({
       setEmail('');
       setPassword('');
       setLocalError('');
+      setShowResetModal(false);
     }
   }, [isOpen]);
 
@@ -128,9 +132,20 @@ const AuthModal = ({
             <button onClick={() => setIsRegister(true)} className="text-red-600 hover:underline">
               Register
             </button>
+            <br />
+            <button onClick={() => setShowResetModal(true)} className="text-red-600 hover:underline mt-2">
+              Forgot password?
+            </button>
           </>
         )}
       </p>
+      {showResetModal && (
+        <PasswordResetModal
+          isOpen={showResetModal}
+          onClose={() => setShowResetModal(false)}
+          onReset={onPasswordReset}
+        />
+      )}
     </Modal>
   );
 };
