@@ -34,3 +34,19 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Email Verification
+
+Account creation requires entering a code that is sent to the provided email
+address. The API route `POST /api/sendVerificationEmail` uses SMTP credentials
+from the environment to deliver the code.
+
+Set the following variables in your `.env.local`:
+
+```bash
+EMAIL_SERVER_HOST=your.smtp.host
+EMAIL_SERVER_PORT=587
+EMAIL_SERVER_USER=username
+EMAIL_SERVER_PASS=password
+EMAIL_FROM="My App <no-reply@yourdomain.com>"
+```
