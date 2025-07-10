@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
+import { google } from 'googleapis';
 
 export async function POST(request) {
   const { email, code } = await request.json();
@@ -8,24 +9,47 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Missing parameters.' }, { status: 400 });
   }
 
-  const host = process.env.EMAIL_SERVER_HOST;
-  const port = parseInt(process.env.EMAIL_SERVER_PORT || '587', 10);
-  const user = process.env.EMAIL_SERVER_USER;
-  const pass = process.env.EMAIL_SERVER_PASS;
-  const from = process.env.EMAIL_FROM || user;
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  const refreshToken = process.env.GMAIL_REFRESH_TOKEN;
+  const gmailUser = process.env.GMAIL_USER || 'mycellarapplication@gmail.com';
+  const redirectUri = process.env.NEXT_PUBLIC_URL;
 
-  if (!host || !user || !pass) {
+  if (!clientId || !clientSecret || !refreshToken) {
     return NextResponse.json(
-      { error: 'Email server not configured.' },
+      { error: 'Gmail OAuth2 not configured.' },
+      { status: 500 }
+    );
+  }
+  const oAuth2Client = new google.auth.OAuth2(clientId, clientSecret, redirectUri);
+  oAuth2Client.setCredentials({ refresh_token: refreshToken });
+
+  let accessToken;
+  try {
+    const tokenRes = await oAuth2Client.getAccessToken();
+    accessToken = tokenRes.token;
+  } catch (err) {
+    return NextResponse.json(
+      { error: `Failed to acquire access token: ${err.message}` },
       { status: 500 }
     );
   }
 
-  const transporter = nodemailer.createTransport({ host, port, auth: { user, pass } });
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      type: 'OAuth2',
+      user: gmailUser,
+      clientId,
+      clientSecret,
+      refreshToken,
+      accessToken
+    }
+  });
 
   try {
     await transporter.sendMail({
-      from,
+      from: `MyCellar <${gmailUser}>`,
       to: email,
       subject: 'Your verification code',
       text: `Your verification code is ${code}`

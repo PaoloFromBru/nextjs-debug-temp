@@ -38,15 +38,27 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 ## Email Verification
 
 Account creation requires entering a code that is sent to the provided email
-address. The API route `POST /api/sendVerificationEmail` uses SMTP credentials
-from the environment to deliver the code.
+address. The API route `POST /api/sendVerificationEmail` now uses Gmail OAuth2
+instead of plain SMTP.
 
-Set the following variables in your `.env.local`:
+### Setup steps
+
+1. In Google Cloud Console enable the **Gmail API** and create an **OAuth client**.
+2. Add `https://www.mycellarapp.com` as an authorized redirect URI and obtain
+   your client ID and client secret.
+3. Generate a refresh token for `mycellarapplication@gmail.com` by completing
+   the OAuth consent flow. Tools like the
+   [`googleapis`](https://www.npmjs.com/package/googleapis) CLI or your own
+   script can be used for this step.
+4. Create `.env.local` with the variables below:
 
 ```bash
-EMAIL_SERVER_HOST=your.smtp.host
-EMAIL_SERVER_PORT=587
-EMAIL_SERVER_USER=username
-EMAIL_SERVER_PASS=password
-EMAIL_FROM="My App <no-reply@yourdomain.com>"
+GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-client-secret
+GMAIL_REFRESH_TOKEN=your-refresh-token
+GMAIL_USER=mycellarapplication@gmail.com
+NEXT_PUBLIC_URL=https://www.mycellarapp.com
 ```
+
+When these values are present, the API route sends emails from the Gmail
+account using OAuth2.
