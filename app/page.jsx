@@ -319,9 +319,11 @@ export default function HomePage() {
       {wineToExperience && (
         <ExperienceWineModal
           isOpen
-          onClose={()=>setWineToExperience(null)}
+          onClose={() => setWineToExperience(null)}
           wine={wineToExperience}
-          onExperience={(notes,rating,date) => handleExperienceWine(wineToExperience.id,notes,rating,date,wines)}
+          onExperience={(notes, rating, date) =>
+            handleExperienceWine(wineToExperience, notes, rating, date)
+          }
         />
       )}
       {pairingWine && (

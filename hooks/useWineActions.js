@@ -144,16 +144,16 @@ export default function useWineActions(db, userId, appId, setError) {
   // ... other handlers (experience, delete, erase) unchanged ...
 
 
-  const handleExperienceWine = async (wineToMoveId, notes, rating, consumedDate, allWines) => {
+  const handleExperienceWine = async (wine, notes, rating, consumedDate) => {
     if (!db || !userId) return errorOut('Database not ready or user not logged in.');
+    if (!wine || !wine.id) return errorOut('Wine not found.');
     setIsLoadingAction(true);
-    const wineToMove = allWines.find(w => w.id === wineToMoveId);
-    if (!wineToMove) return errorOut('Wine not found.');
+    const wineToMove = wine;
 
     try {
       const batch = writeBatch(db);
-      const wineDocRef = doc(db, winesCollectionPath, wineToMoveId);
-      const experiencedWineDocRef = doc(db, experiencedWinesCollectionPath, wineToMoveId);
+      const wineDocRef = doc(db, winesCollectionPath, wine.id);
+      const experiencedWineDocRef = doc(db, experiencedWinesCollectionPath, wine.id);
 
       batch.set(experiencedWineDocRef, {
         ...wineToMove,
