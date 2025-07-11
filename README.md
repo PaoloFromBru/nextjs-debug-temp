@@ -38,30 +38,22 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 ## Email Verification
 
 Account creation requires entering a code that is sent to the provided email
-address. The API route `POST /api/sendVerificationEmail` now uses Gmail OAuth2
-instead of plain SMTP.
+address. The API route `POST /api/sendVerificationEmail` now uses a Gmail App
+Password for authentication.
 
 ### Setup steps
 
-1. In Google Cloud Console enable the **Gmail API** and create an **OAuth client**.
-2. Add `https://www.mycellarapp.com` as an authorized redirect URI and obtain
-   your client ID and client secret.
-3. Generate a refresh token for `mycellarapplication@gmail.com` by completing
-   the OAuth consent flow. Tools like the
-   [`googleapis`](https://www.npmjs.com/package/googleapis) CLI or your own
-   script can be used for this step.
-4. Create `.env.local` with the variables below:
+1. Enable two-factor authentication for your Gmail account and generate an App
+   Password for "Mail".
+2. Create `.env.local` with the variables below:
 
 ```bash
-GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=your-client-secret
-GMAIL_REFRESH_TOKEN=your-refresh-token
 GMAIL_USER=mycellarapplication@gmail.com
-NEXT_PUBLIC_URL=https://www.mycellarapp.com
+GMAIL_APP_PASSWORD=your-app-password
 ```
 
 When these values are present, the API route sends emails from the Gmail
-account using OAuth2.
+account using SMTP.
 
 ### Troubleshooting Gmail authentication
 
@@ -71,8 +63,6 @@ If `POST /api/sendVerificationEmail` fails with an error such as:
 Failed to send email: Invalid login: 535-5.7.8 Username and Password not accepted
 ```
 
-verify that your `.env.local` contains valid values for all OAuth2 variables.
-The refresh token must belong to the account specified by `GMAIL_USER` and the
-Gmail API must be enabled for your OAuth client. Ensure the redirect URI used
-when obtaining the refresh token matches `NEXT_PUBLIC_URL`. Incorrect or expired
-credentials will lead to this 535 error from Gmail.
+verify that your `.env.local` contains the correct `GMAIL_APP_PASSWORD` for the
+account specified by `GMAIL_USER`. Using an incorrect or revoked password will
+lead to this 535 error from Gmail.

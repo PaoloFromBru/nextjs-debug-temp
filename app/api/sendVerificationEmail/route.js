@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
-import { google } from 'googleapis';
 
 export async function POST(request) {
   const { email, code } = await request.json();
@@ -10,37 +9,17 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Missing parameters.' }, { status: 400 });
   }
 
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  const refreshToken = process.env.GMAIL_REFRESH_TOKEN;
   const gmailUser = process.env.GMAIL_USER || 'mycellarapplication@gmail.com';
-  const redirectUri = process.env.NEXT_PUBLIC_URL;
+  const appPassword = process.env.GMAIL_APP_PASSWORD;
 
-  console.debug('Loaded OAuth2 environment', {
-    clientIdExists: Boolean(clientId),
-    clientSecretExists: Boolean(clientSecret),
-    refreshTokenExists: Boolean(refreshToken),
-    redirectUri,
+  console.debug('Loaded SMTP environment', {
+    user: gmailUser,
+    appPasswordExists: Boolean(appPassword),
   });
 
-  if (!clientId || !clientSecret || !refreshToken) {
+  if (!appPassword) {
     return NextResponse.json(
-      { error: 'Gmail OAuth2 not configured.' },
-      { status: 500 }
-    );
-  }
-  const oAuth2Client = new google.auth.OAuth2(clientId, clientSecret, redirectUri);
-  oAuth2Client.setCredentials({ refresh_token: refreshToken });
-
-  let accessToken;
-  try {
-    const tokenRes = await oAuth2Client.getAccessToken();
-    accessToken = tokenRes.token;
-    console.debug('Obtained access token');
-  } catch (err) {
-    console.error('Error acquiring access token', err);
-    return NextResponse.json(
-      { error: `Failed to acquire access token: ${err.message}` },
+      { error: 'Gmail app password not configured.' },
       { status: 500 }
     );
   }
@@ -48,12 +27,8 @@ export async function POST(request) {
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-      type: 'OAuth2',
       user: gmailUser,
-      clientId,
-      clientSecret,
-      refreshToken,
-      accessToken
+      pass: appPassword,
     }
   });
 
