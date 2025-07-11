@@ -58,3 +58,25 @@ When this value is present, the API route sends emails from
 If `POST /api/sendVerificationEmail` fails, verify that your `RESEND_API_KEY`
 is valid and has permission to send emails. A missing or incorrect key will
 cause a 401 error from Resend.
+
+## Password Reset Emails
+
+Password reset messages are also delivered with **Resend**. The API route
+`POST /api/sendPasswordResetEmail` generates a Firebase reset link and sends it
+using Resend.
+
+### Setup steps
+
+1. Follow the Resend setup above so `RESEND_API_KEY` is available.
+2. Provide Firebase Admin credentials in `.env.local`:
+
+```bash
+FIREBASE_PROJECT_ID=your-project-id
+FIREBASE_CLIENT_EMAIL=service-account@example.iam.gserviceaccount.com
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+```
+
+### Troubleshooting password reset
+
+Errors from the endpoint usually mean the Firebase credentials or Resend API
+key are missing or invalid. Check the server logs for details.

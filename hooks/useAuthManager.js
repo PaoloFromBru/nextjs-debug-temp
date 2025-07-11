@@ -3,8 +3,7 @@ import { useState } from 'react';
 import {
   signOut,
   createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  sendPasswordResetEmail
+  signInWithEmailAndPassword
 } from 'firebase/auth';
 
 export const useAuthManager = (authInstance) => {
@@ -54,15 +53,25 @@ export const useAuthManager = (authInstance) => {
     setAuthError(null);
     try {
       console.log('Attempting to send password reset email to', email);
-      await sendPasswordResetEmail(authInstance, email);
+      const res = await fetch('/api/sendPasswordResetEmail', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+
+      if (!res.ok) {
+        let msg = 'Failed to send password reset email.';
+        try {
+          const data = await res.json();
+          if (data && data.error) msg = data.error;
+        } catch (_) { /* ignore */ }
+        throw new Error(msg);
+      }
       console.log('Password reset email request sent successfully');
       return { success: true };
     } catch (error) {
-      console.error('sendPasswordResetEmail failed:', error);
-      let message = 'Failed to send password reset email.';
-      if (error.code === 'auth/user-not-found') {
-        message = 'No account found with this email.';
-      }
+      console.error('Password reset request failed:', error);
+      let message = error.message || 'Failed to send password reset email.';
       setAuthError(message);
       return { success: false, error: message };
     } finally {
