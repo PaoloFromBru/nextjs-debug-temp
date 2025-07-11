@@ -53,9 +53,12 @@ export const useAuthManager = (authInstance) => {
     setIsLoadingAuth(true);
     setAuthError(null);
     try {
+      console.log('Attempting to send password reset email to', email);
       await sendPasswordResetEmail(authInstance, email);
+      console.log('Password reset email request sent successfully');
       return { success: true };
     } catch (error) {
+      console.error('sendPasswordResetEmail failed:', error);
       let message = 'Failed to send password reset email.';
       if (error.code === 'auth/user-not-found') {
         message = 'No account found with this email.';

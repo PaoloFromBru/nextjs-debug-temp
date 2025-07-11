@@ -183,6 +183,7 @@ const AuthModal = ({
           isOpen={showResetModal}
           onClose={() => setShowResetModal(false)}
           onReset={onPasswordReset}
+          loading={loading}
         />
       )}
     </Modal>
