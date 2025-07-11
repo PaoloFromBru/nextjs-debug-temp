@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
 export async function POST(request) {
   const { email, code } = await request.json();
@@ -9,38 +9,30 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Missing parameters.' }, { status: 400 });
   }
 
-  const gmailUser = process.env.GMAIL_USER || 'mycellarapplication@gmail.com';
-  const appPassword = process.env.GMAIL_APP_PASSWORD;
+  const apiKey = process.env.RESEND_API_KEY;
 
-  console.debug('Loaded SMTP environment', {
-    user: gmailUser,
-    appPasswordExists: Boolean(appPassword),
+  console.debug('Loaded Resend environment', {
+    apiKeyExists: Boolean(apiKey),
   });
 
-  if (!appPassword) {
+  if (!apiKey) {
     return NextResponse.json(
-      { error: 'Gmail app password not configured.' },
+      { error: 'Resend API key not configured.' },
       { status: 500 }
     );
   }
 
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: gmailUser,
-      pass: appPassword,
-    }
-  });
+  const resend = new Resend(apiKey);
 
-  console.debug('Nodemailer transporter configured for Gmail');
+  console.debug('Resend client configured');
 
   try {
     console.debug('Sending verification email to', email);
-    await transporter.sendMail({
-      from: `MyCellar <${gmailUser}>`,
+    await resend.emails.send({
+      from: 'MyCellar <noreply@resend.dev>',
       to: email,
       subject: 'Your verification code',
-      text: `Your verification code is ${code}`
+      text: `Your verification code is ${code}`,
     });
     console.debug('Verification email sent successfully');
     return NextResponse.json({ success: true });
