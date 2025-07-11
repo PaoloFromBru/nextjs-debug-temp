@@ -53,9 +53,9 @@ export const useAuthManager = (authInstance) => {
     setIsLoadingAuth(true);
     setAuthError(null);
     try {
-      console.debug('Attempting to send password reset email to', email);
+      console.log('Attempting to send password reset email to', email);
       await sendPasswordResetEmail(authInstance, email);
-      console.debug('Password reset email request sent successfully');
+      console.log('Password reset email request sent successfully');
       return { success: true };
     } catch (error) {
       console.error('sendPasswordResetEmail failed:', error);
