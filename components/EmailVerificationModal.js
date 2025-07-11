@@ -1,25 +1,31 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import Modal from './Modal';
-import AlertMessage from './AlertMessage';
+import React, { useState, useEffect } from "react";
+import Modal from "./Modal";
+import AlertMessage from "./AlertMessage";
 
-const EmailVerificationModal = ({ isOpen, onClose, onVerify, error }) => {
-  const [code, setCode] = useState('');
-  const [localError, setLocalError] = useState('');
+const EmailVerificationModal = ({
+  isOpen,
+  onClose,
+  onVerify,
+  error,
+  message,
+}) => {
+  const [code, setCode] = useState("");
+  const [localError, setLocalError] = useState("");
 
   useEffect(() => {
     if (!isOpen) {
-      setCode('');
-      setLocalError('');
+      setCode("");
+      setLocalError("");
     }
   }, [isOpen]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    setLocalError('');
+    setLocalError("");
     if (!code) {
-      setLocalError('Verification code is required.');
+      setLocalError("Verification code is required.");
       return;
     }
     onVerify(code);
@@ -28,15 +34,19 @@ const EmailVerificationModal = ({ isOpen, onClose, onVerify, error }) => {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Verify Email">
       <form onSubmit={handleSubmit} className="space-y-4">
+        {message && <AlertMessage message={message} type="info" />}
         {(localError || error) && (
           <AlertMessage
             message={localError || error}
             type="error"
-            onDismiss={() => setLocalError('')}
+            onDismiss={() => setLocalError("")}
           />
         )}
         <div>
-          <label htmlFor="verificationCode" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+          <label
+            htmlFor="verificationCode"
+            className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+          >
             Verification Code
           </label>
           <input
@@ -69,4 +79,3 @@ const EmailVerificationModal = ({ isOpen, onClose, onVerify, error }) => {
 };
 
 export default EmailVerificationModal;
-
