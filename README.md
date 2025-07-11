@@ -38,31 +38,23 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 ## Email Verification
 
 Account creation requires entering a code that is sent to the provided email
-address. The API route `POST /api/sendVerificationEmail` now uses a Gmail App
-Password for authentication.
+address. The API route `POST /api/sendVerificationEmail` now uses the
+[Resend](https://resend.com/) service.
 
 ### Setup steps
 
-1. Enable two-factor authentication for your Gmail account and generate an App
-   Password for "Mail".
-2. Create `.env.local` with the variables below:
+1. Sign up for Resend and create an API key.
+2. Add the following variable to `.env.local`:
 
 ```bash
-GMAIL_USER=mycellarapplication@gmail.com
-GMAIL_APP_PASSWORD=your-app-password
+RESEND_API_KEY=your-resend-api-key
 ```
 
-When these values are present, the API route sends emails from the Gmail
-account using SMTP.
+When this value is present, the API route sends emails from
+`MyCellar <noreply@resend.dev>` using the Resend API.
 
-### Troubleshooting Gmail authentication
+### Troubleshooting Resend authentication
 
-If `POST /api/sendVerificationEmail` fails with an error such as:
-
-```
-Failed to send email: Invalid login: 535-5.7.8 Username and Password not accepted
-```
-
-verify that your `.env.local` contains the correct `GMAIL_APP_PASSWORD` for the
-account specified by `GMAIL_USER`. Using an incorrect or revoked password will
-lead to this 535 error from Gmail.
+If `POST /api/sendVerificationEmail` fails, verify that your `RESEND_API_KEY`
+is valid and has permission to send emails. A missing or incorrect key will
+cause a 401 error from Resend.
