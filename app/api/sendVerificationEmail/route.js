@@ -29,7 +29,7 @@ export async function POST(request) {
   try {
     console.debug('Sending verification email to', email);
     await resend.emails.send({
-      from: 'MyCellar <noreply@resend.dev>',
+      from: 'MyCellar <noreply@mycellarapp.com>',
       to: email,
       subject: 'Your verification code',
       text: `Your verification code is ${code}`,
