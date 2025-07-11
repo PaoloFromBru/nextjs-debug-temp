@@ -62,3 +62,17 @@ NEXT_PUBLIC_URL=https://www.mycellarapp.com
 
 When these values are present, the API route sends emails from the Gmail
 account using OAuth2.
+
+### Troubleshooting Gmail authentication
+
+If `POST /api/sendVerificationEmail` fails with an error such as:
+
+```
+Failed to send email: Invalid login: 535-5.7.8 Username and Password not accepted
+```
+
+verify that your `.env.local` contains valid values for all OAuth2 variables.
+The refresh token must belong to the account specified by `GMAIL_USER` and the
+Gmail API must be enabled for your OAuth client. Ensure the redirect URI used
+when obtaining the refresh token matches `NEXT_PUBLIC_URL`. Incorrect or expired
+credentials will lead to this 535 error from Gmail.
