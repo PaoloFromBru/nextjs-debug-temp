@@ -244,7 +244,17 @@ export default function HomePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, code }),
       });
-      if (!res.ok) throw new Error("Failed to send verification email");
+
+      if (!res.ok) {
+        let msg = "Failed to send verification email";
+        try {
+          const data = await res.json();
+          if (data && data.error) msg = data.error;
+        } catch (e) {
+          // ignore JSON parse errors
+        }
+        throw new Error(msg);
+      }
       setPendingRegistration({ email, password, code });
       setVerificationMessage(
         "Verification email sent. Please check your inbox.",
