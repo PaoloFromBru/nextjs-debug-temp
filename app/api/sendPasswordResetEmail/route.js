@@ -3,12 +3,31 @@ import { Resend } from 'resend';
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 
+export const runtime = 'nodejs';
+
 function initAdmin() {
   if (getApps().length) return;
 
   const projectId = process.env.FIREBASE_PROJECT_ID;
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-  const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+  let rawKey = process.env.FIREBASE_PRIVATE_KEY;
+  if (rawKey && rawKey.includes('\\n')) {
+    rawKey = rawKey.replace(/\\n/g, '\n');
+  }
+  if (rawKey && !rawKey.includes('BEGIN')) {
+    try {
+      rawKey = Buffer.from(rawKey, 'base64').toString('utf8');
+    } catch (err) {
+      console.error('Failed to decode FIREBASE_PRIVATE_KEY', err);
+    }
+  }
+  const privateKey = rawKey;
+
+  console.log('Loading Firebase Admin credentials', {
+    projectIdExists: Boolean(projectId),
+    clientEmailExists: Boolean(clientEmail),
+    privateKeyLength: privateKey?.length,
+  });
 
   console.debug('Loading Firebase Admin credentials', {
     projectIdExists: Boolean(projectId),
@@ -29,7 +48,7 @@ function initAdmin() {
     initializeApp({
       credential: cert({ projectId, clientEmail, privateKey })
     });
-    console.debug('Firebase Admin initialized');
+    console.log('Firebase Admin initialized');
   } catch (err) {
     console.error('Failed to initialize Firebase Admin', err);
     throw err;
@@ -38,14 +57,14 @@ function initAdmin() {
 
 export async function POST(request) {
   const { email } = await request.json();
-  console.debug('Password reset email request received', { email });
+  console.log('Password reset email request received', { email });
 
   if (!email) {
     return NextResponse.json({ error: 'Missing email.' }, { status: 400 });
   }
 
   const apiKey = process.env.RESEND_API_KEY;
-  console.debug('Loaded Resend environment', {
+  console.log('Loaded Resend environment', {
     apiKeyExists: Boolean(apiKey),
   });
 
@@ -65,7 +84,7 @@ export async function POST(request) {
       subject: 'Password reset',
       text: `Click the link below to reset your password:\n\n${link}`,
     });
-    console.debug('Password reset email sent successfully');
+    console.log('Password reset email sent successfully');
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error('Error sending password reset email', err);
