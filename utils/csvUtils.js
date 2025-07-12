@@ -71,6 +71,8 @@ export const exportToCsv = (data, fileName, headers, isExperienced = false) => {
     ];
 
     data.forEach(item => {
+        const startYear = item.drinkingWindowStartYear ?? '';
+        const endYear = item.drinkingWindowEndYear ?? '';
         const row = isExperienced ? [
             escapeCsvField(item.name),
             escapeCsvField(item.producer),
@@ -78,8 +80,8 @@ export const exportToCsv = (data, fileName, headers, isExperienced = false) => {
             escapeCsvField(item.region),
             escapeCsvField(item.color),
             escapeCsvField(item.location),
-            escapeCsvField(item.drinkingWindowStartYear),
-            escapeCsvField(item.drinkingWindowEndYear),
+            escapeCsvField(startYear),
+            escapeCsvField(endYear),
             escapeCsvField(item.consumedAt ? (item.consumedAt instanceof Timestamp ? item.consumedAt.toDate().toISOString().slice(0, 10) : new Date(item.consumedAt).toISOString().slice(0, 10)) : ''),
             escapeCsvField(item.rating),
             escapeCsvField(item.tastingNotes)
@@ -90,8 +92,8 @@ export const exportToCsv = (data, fileName, headers, isExperienced = false) => {
             escapeCsvField(item.region),
             escapeCsvField(item.color),
             escapeCsvField(item.location),
-            escapeCsvField(item.drinkingWindowStartYear),
-            escapeCsvField(item.drinkingWindowEndYear)
+            escapeCsvField(startYear),
+            escapeCsvField(endYear)
         ];
         csvRows.push(row.join(';'));
     });
