@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
 
+export const runtime = 'nodejs';
+
 export async function POST(request) {
   const { email, code } = await request.json();
-  console.debug('Verification email request received', { email, code });
+  console.log('Verification email request received', { email, code });
 
   if (!email || !code) {
     return NextResponse.json({ error: 'Missing parameters.' }, { status: 400 });
@@ -11,7 +13,7 @@ export async function POST(request) {
 
   const apiKey = process.env.RESEND_API_KEY;
 
-  console.debug('Loaded Resend environment', {
+  console.log('Loaded Resend environment', {
     apiKeyExists: Boolean(apiKey),
   });
 
@@ -24,17 +26,17 @@ export async function POST(request) {
 
   const resend = new Resend(apiKey);
 
-  console.debug('Resend client configured');
+  console.log('Resend client configured');
 
   try {
-    console.debug('Sending verification email to', email);
+    console.log('Sending verification email to', email);
     await resend.emails.send({
       from: 'MyCellar <noreply@mycellarapp.com>',
       to: email,
       subject: 'Your verification code',
       text: `Your verification code is ${code}`,
     });
-    console.debug('Verification email sent successfully');
+    console.log('Verification email sent successfully');
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error('Error sending verification email', err);
