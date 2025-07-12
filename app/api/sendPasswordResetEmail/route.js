@@ -29,6 +29,12 @@ function initAdmin() {
     privateKeyLength: privateKey?.length,
   });
 
+  console.debug('Loading Firebase Admin credentials', {
+    projectIdExists: Boolean(projectId),
+    clientEmailExists: Boolean(clientEmail),
+    privateKeyLength: privateKey?.length,
+  });
+
   if (!projectId || !clientEmail || !privateKey) {
     console.error('Firebase Admin credentials not configured', {
       projectIdExists: Boolean(projectId),
