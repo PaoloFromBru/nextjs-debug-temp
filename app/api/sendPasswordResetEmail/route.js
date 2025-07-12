@@ -5,7 +5,17 @@ import { getAuth } from 'firebase-admin/auth';
 
 export const runtime = 'nodejs';
 
-function initAdmin() {
+function createLogger(store) {
+  return (...args) => {
+    const msg = args
+      .map((a) => (typeof a === 'string' ? a : JSON.stringify(a)))
+      .join(' ');
+    store.push(msg);
+    console.log(...args);
+  };
+}
+
+function initAdmin(log = console.log) {
   if (getApps().length) return;
 
   const projectId = process.env.FIREBASE_PROJECT_ID;
@@ -23,20 +33,14 @@ function initAdmin() {
   }
   const privateKey = rawKey;
 
-  console.log('Loading Firebase Admin credentials', {
-    projectIdExists: Boolean(projectId),
-    clientEmailExists: Boolean(clientEmail),
-    privateKeyLength: privateKey?.length,
-  });
-
-  console.debug('Loading Firebase Admin credentials', {
+  log('Loading Firebase Admin credentials', {
     projectIdExists: Boolean(projectId),
     clientEmailExists: Boolean(clientEmail),
     privateKeyLength: privateKey?.length,
   });
 
   if (!projectId || !clientEmail || !privateKey) {
-    console.error('Firebase Admin credentials not configured', {
+    log('Firebase Admin credentials not configured', {
       projectIdExists: Boolean(projectId),
       clientEmailExists: Boolean(clientEmail),
       privateKeyExists: Boolean(privateKey),
@@ -48,7 +52,7 @@ function initAdmin() {
     initializeApp({
       credential: cert({ projectId, clientEmail, privateKey })
     });
-    console.log('Firebase Admin initialized');
+    log('Firebase Admin initialized');
   } catch (err) {
     console.error('Failed to initialize Firebase Admin', err);
     throw err;
@@ -56,15 +60,19 @@ function initAdmin() {
 }
 
 export async function POST(request) {
+  const logs = [];
+  const log = createLogger(logs);
+  const includeLogs = request.nextUrl.searchParams.get('debug') === 'true';
+
   const { email } = await request.json();
-  console.log('Password reset email request received', { email });
+  log('Password reset email request received', { email });
 
   if (!email) {
     return NextResponse.json({ error: 'Missing email.' }, { status: 400 });
   }
 
   const apiKey = process.env.RESEND_API_KEY;
-  console.log('Loaded Resend environment', {
+  log('Loaded Resend environment', {
     apiKeyExists: Boolean(apiKey),
   });
 
@@ -73,7 +81,7 @@ export async function POST(request) {
   }
 
   try {
-    initAdmin();
+    initAdmin(log);
     const auth = getAuth();
     const link = await auth.generatePasswordResetLink(email);
 
@@ -84,12 +92,12 @@ export async function POST(request) {
       subject: 'Password reset',
       text: `Click the link below to reset your password:\n\n${link}`,
     });
-    console.log('Password reset email sent successfully');
-    return NextResponse.json({ success: true });
+    log('Password reset email sent successfully');
+    return NextResponse.json({ success: true, logs: includeLogs ? logs : undefined });
   } catch (err) {
     console.error('Error sending password reset email', err);
     return NextResponse.json(
-      { error: `Failed to send email: ${err.message}` },
+      { error: `Failed to send email: ${err.message}`, logs: includeLogs ? logs : undefined },
       { status: 500 }
     );
   }
