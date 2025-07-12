@@ -38,6 +38,9 @@ const ExperiencedWinesView = ({ experiencedWines: experiencedWinesProp, onDelete
   return (
     <>
       <h2 className="text-2xl font-semibold text-slate-700 dark:text-slate-200 mb-4 mt-8">Experienced Wines</h2>
+      <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">
+        Total Wines: {winesList.length}
+      </p>
 
       {winesList.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

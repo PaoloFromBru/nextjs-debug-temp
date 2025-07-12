@@ -46,6 +46,9 @@ const DrinkSoonView = ({
           <p className="text-sm text-yellow-700 dark:text-yellow-400 mb-4">
             These wines are past or approaching their ideal drinking window.
           </p>
+          <p className="text-sm text-yellow-700 dark:text-yellow-400 mb-4">
+            Number of Wines: {winesApproachingEnd.length}
+          </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {winesApproachingEnd.map(wine => (
               <WineItem

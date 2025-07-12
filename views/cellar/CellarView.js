@@ -25,6 +25,13 @@ const CellarView = ({
         <AddWineButton onAdd={() => handleOpenWineForm({})} />
       </div>
 
+      {/* Show number of wines */}
+      {!isLoading && (
+        <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">
+          Total Wines: {allWines.length}
+        </p>
+      )}
+
       {(isLoading || isLoadingAction) && (
         <div className="flex justify-center mb-6">
           <LoadingSpinner />
