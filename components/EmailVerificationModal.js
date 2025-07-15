@@ -35,6 +35,12 @@ const EmailVerificationModal = ({
     <Modal isOpen={isOpen} onClose={onClose} title="Verify Email">
       <form onSubmit={handleSubmit} className="space-y-4">
         {message && <AlertMessage message={message} type="info" />}
+        {!message && (
+          <AlertMessage
+            message="Enter the 6-digit code we just emailed. If you don't see it, check your spam folder or close this window and try registering again."
+            type="info"
+          />
+        )}
         {(localError || error) && (
           <AlertMessage
             message={localError || error}

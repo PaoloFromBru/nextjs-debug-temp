@@ -257,12 +257,14 @@ export default function HomePage() {
       }
       setPendingRegistration({ email, password, code });
       setVerificationMessage(
-        "Verification email sent. Please check your inbox.",
+        "Verification email sent. Please check your inbox and spam folder. If you don't see it soon, close this window and try registering again.",
       );
       setShowVerificationModal(true);
       return { success: true };
     } catch (err) {
-      setVerificationError(err.message);
+      setVerificationError(
+        `${err.message}. If you didn't get the email, double-check the address and try again.`,
+      );
       return { success: false };
     }
   };
@@ -281,7 +283,9 @@ export default function HomePage() {
       setShowVerificationModal(false);
       setPendingRegistration(null);
     } else {
-      setVerificationError(res.error || "Registration failed.");
+      setVerificationError(
+        `${res.error || "Registration failed."} If the problem persists, try requesting a new verification code.`,
+      );
     }
   };
 
