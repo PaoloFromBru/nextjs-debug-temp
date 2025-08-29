@@ -5,9 +5,5 @@
 import ExperiencedWinesView from '@/views/experienced/ExperiencedWinesView';
 
 export default function ExperiencedPage() {
-  return (
-    <main className="p-4">
-      <ExperiencedWinesView />
-    </main>
-  );
+  return <ExperiencedWinesView />;
 }
