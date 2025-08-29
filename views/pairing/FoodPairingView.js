@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import AlertMessage from '@/components/AlertMessage'; // Adjusted for alias support
 
 // --- Local Icons ---
 const SparklesIcon = ({ className = "w-5 h-5" }) => (
@@ -19,15 +18,49 @@ const FoodPairingView = ({
   foodForReversePairing,
   setFoodForReversePairing,
   handleFindWineForFood,
+  shoppingFood,
+  setShoppingFood,
+  handleFindWineToBuy,
   isLoadingReversePairing,
   wines,
   goToCellar
 }) => {
   return (
     <>
-      {/* Reverse Pairing */}
+      {/* Reverse Pairing - Shopping */}
       <section className="mb-8 p-6 bg-white dark:bg-slate-800 rounded-lg shadow">
-        <h2 className="text-xl font-semibold text-slate-700 dark:text-slate-200 mb-3">Find the Perfect Wine for Your Meal</h2>
+        <h2 className="text-xl font-semibold text-slate-700 dark:text-slate-200 mb-3">I am shopping for wine</h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+          Enter a food item and we'll suggest a wine to purchase.
+        </p>
+
+        <div className="flex flex-col sm:flex-row items-end gap-3">
+          <div className="flex-grow w-full">
+            <label htmlFor="shoppingFoodItem" className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">What are you eating?</label>
+            <input
+              id="shoppingFoodItem"
+              type="text"
+              placeholder="e.g., truffle pasta, sushi, steak..."
+              value={shoppingFood}
+              onChange={(e) => setShoppingFood(e.target.value)}
+              className="w-full p-3 rounded-md border border-slate-300 dark:border-slate-600 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none dark:bg-slate-700 dark:text-slate-200"
+            />
+          </div>
+
+          <button
+            onClick={handleFindWineToBuy}
+            disabled={isLoadingReversePairing || !shoppingFood.trim()}
+            className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-md shadow-md hover:shadow-lg transition-all flex items-center justify-center space-x-2 disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            <SparklesIcon />
+            <span>Suggest wines to buy</span>
+          </button>
+        </div>
+      </section>
+
+      {/* Reverse Pairing - Cellar */}
+      <section className="mb-8 p-6 bg-white dark:bg-slate-800 rounded-lg shadow">
+        <h2 className="text-xl font-semibold text-slate-700 dark:text-slate-200 mb-3">Find a Wine from My Cellar</h2>
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
           Enter a food item and we'll suggest a wine from your cellar.
         </p>
