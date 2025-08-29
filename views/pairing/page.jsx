@@ -6,6 +6,7 @@ import FoodPairingView from '@/views/pairing/FoodPairingView';
 
 export default function FoodPairingPage() {
   const [foodForReversePairing, setFoodForReversePairing] = useState('');
+  const [shoppingFood, setShoppingFood] = useState('');
   const [isLoadingReversePairing, setIsLoadingReversePairing] = useState(false);
   const [wines, setWines] = useState([]); // This would usually come from Firebase
 
@@ -16,6 +17,13 @@ export default function FoodPairingPage() {
       setIsLoadingReversePairing(false);
     }, 1500);
   };
+  const handleFindWineToBuy = async () => {
+    setIsLoadingReversePairing(true);
+    setTimeout(() => {
+      alert(`Suggesting wines to buy for: ${shoppingFood}`);
+      setIsLoadingReversePairing(false);
+    }, 1500);
+  };
 
   return (
     <main className="space-y-10">
@@ -23,6 +31,9 @@ export default function FoodPairingPage() {
         foodForReversePairing={foodForReversePairing}
         setFoodForReversePairing={setFoodForReversePairing}
         handleFindWineForFood={handleFindWineForFood}
+        shoppingFood={shoppingFood}
+        setShoppingFood={setShoppingFood}
+        handleFindWineToBuy={handleFindWineToBuy}
         isLoadingReversePairing={isLoadingReversePairing}
         wines={wines}
         goToCellar={() => alert('Going to cellar')}

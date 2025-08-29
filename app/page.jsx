@@ -159,6 +159,7 @@ export default function HomePage() {
     errors: [],
   });
   const [foodForReversePairing, setFoodForReversePairing] = useState("");
+  const [shoppingFood, setShoppingFood] = useState("");
   const [wineToEdit, setWineToEdit] = useState(null);
   const [wineToExperience, setWineToExperience] = useState(null);
   const [pairingWine, setPairingWine] = useState(null);
@@ -316,6 +317,11 @@ export default function HomePage() {
     setShowReversePairingModal(true);
     await findWineForFood(foodForReversePairing, wines);
   };
+  const handleFindWineToBuy = async () => {
+    setFoodForReversePairing(shoppingFood);
+    setShowReversePairingModal(true);
+    await findWineForFood(shoppingFood, []);
+  };
   const fetchFoodPairing = async (wine) => {
     if (!wine) return;
     setIsLoadingPairing(true);
@@ -465,6 +471,9 @@ export default function HomePage() {
             foodForReversePairing={foodForReversePairing}
             setFoodForReversePairing={setFoodForReversePairing}
             handleFindWineForFood={handleFindWineForFood}
+            shoppingFood={shoppingFood}
+            setShoppingFood={setShoppingFood}
+            handleFindWineToBuy={handleFindWineToBuy}
             isLoadingReversePairing={isLoadingAI}
             wines={wines}
             goToCellar={() => setView("cellar")}
@@ -510,9 +519,15 @@ export default function HomePage() {
           isOpen
           onClose={() => setWineToExperience(null)}
           wine={wineToExperience}
-          onExperience={(notes, rating, date) =>
-            handleExperienceWine(wineToExperience, notes, rating, date)
-          }
+          onExperience={async (notes, rating, date) => {
+            const res = await handleExperienceWine(
+              wineToExperience,
+              notes,
+              rating,
+              date,
+            );
+            if (res?.success) setWineToExperience(null);
+          }}
         />
       )}
       {pairingWine && (

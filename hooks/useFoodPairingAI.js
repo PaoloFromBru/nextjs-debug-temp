@@ -10,12 +10,19 @@ export default function useFoodPairingAI() {
     setError(null);
     setResponse(null);
 
-    const formattedList = (wineList || [])
-      .map(w => `${w.producer} ${w.name ? '(' + w.name + ')' : ''} ${w.region || ''} ${w.year || ''}`.trim())
+    const list = wineList || [];
+    const formattedList = list
+      .map(
+        (w) =>
+          `${w.producer} ${w.name ? '(' + w.name + ')' : ''} ${w.region || ''} ${
+            w.year || ''
+          }`.trim()
+      )
       .join('\n');
 
-    const prompt =
-      `Given the food item: "${food}", and the following wines from my cellar:\n\n${formattedList}\n\nSuggest 1-3 wines from the list that would pair well with "${food}". Focus only on the provided wine list.`;
+    const prompt = list.length
+      ? `Given the food item: "${food}", and the following wines from my cellar:\n\n${formattedList}\n\nSuggest 1-3 wines from the list that would pair well with "${food}". Focus only on the provided wine list.`
+      : `Given the food item: "${food}", suggest 1-3 wines that would pair well. Include a brief reason for each suggestion.`;
 
     console.log('[ReversePairing] 🧠 Prompt:\n', prompt);
 
