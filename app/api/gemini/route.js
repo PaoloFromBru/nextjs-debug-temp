@@ -10,7 +10,19 @@ export async function POST(request) {
     );
   }
 
-  const model = process.env.GEMINI_MODEL ?? 'gemini-1.5-flash-002';
+  let model = process.env.GEMINI_MODEL ?? 'gemini-1.5-flash-002';
+  const deprecatedModels = new Set([
+    'gemini-2.0-flash',
+    'gemini-2.0-flash-001',
+    'gemini-2.0-flash-lite',
+    'gemini-2.0-flash-lite-001',
+  ]);
+
+  if (deprecatedModels.has(model)) {
+    model = model.includes('flash-lite')
+      ? 'gemini-2.5-flash-lite'
+      : 'gemini-2.5-flash';
+  }
   const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
   try {
