@@ -215,7 +215,6 @@ export default function useWineActions(db, userId, appId, setError, cellarId) {
     try {
       const winesRef = collection(db, winesCollectionPath);
       const expRef = collection(db, experiencedWinesCollectionPath);
-
       // Support legacy docs without `cellarId` when moving from "default".
       let winesToMove = [];
       let expToMove = [];

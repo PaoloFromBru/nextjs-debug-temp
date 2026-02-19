@@ -201,7 +201,6 @@ export default function HomePage() {
     const found = cellars.find((c) => c.id === activeCellarId);
     return found ? (found.name || found.id) : activeCellarId;
   }, [activeCellarId, cellars]);
-
   // Scope wines by active cellar
   const scopedWines = useMemo(() => {
     if (!activeCellarId) return wines;
