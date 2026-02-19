@@ -18,6 +18,12 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
+## Settings (Cellars + Import/Export)
+
+- Define multiple cellars per user under Settings.
+- Use “Select Active Cellar” to scope search, Drink Soon, pairing, and exports to the cellar you currently have access to (e.g., Belgium vs. Brussels).
+- Add/Delete cellars from the same page. Deleting allows optional reassignment of its wines to another cellar.
+
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
 ## Learn More

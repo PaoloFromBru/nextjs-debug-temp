@@ -46,9 +46,10 @@ const HelpView = () => {
             ]
           },
           {
-            title: 'Import/Export',
+            title: 'Settings (Cellars & Import/Export)',
             points: [
               '**Import Wines:** Upload a CSV file to add multiple wines to your cellar at once. Refer to the expected CSV headers for formatting.',
+              '**Cellars:** Add multiple cellars (e.g., Belgium, Brussels), select the active one to scope search, Drink Soon, pairing, and exports.',
               '**Export Wines:** Download your active cellar or experienced wines data as a CSV file for backup or external use.',
               '**Danger Zone:** Permanently erase all wines from your active cellar (use with caution!).',
             ]

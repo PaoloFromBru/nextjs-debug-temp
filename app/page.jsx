@@ -15,6 +15,7 @@ import HelpView from "@/views/help/HelpView";
 import WineFormModal from "@/components/WineFormModal";
 import ExperienceWineModal from "@/components/ExperienceWineModal";
 import FoodPairingModal from "@/components/FoodPairingModal";
+import useCellars from "@/hooks/useCellars";
 import ReverseFoodPairingModal from "@/components/ReverseFoodPairingModal";
 import AuthModal from "@/components/AuthModal";
 import EmailVerificationModal from "@/components/EmailVerificationModal";
@@ -184,6 +185,27 @@ export default function HomePage() {
     appId,
   } = useFirebaseData();
 
+  // Cellars: user-defined
+  const {
+    cellars,
+    activeCellarId,
+    setActiveCellarId,
+    createCellar,
+    deleteCellar,
+  } = useCellars(db, user?.uid, appId);
+
+  // Scope wines by active cellar
+  const scopedWines = useMemo(() => {
+    if (!activeCellarId) return wines;
+    return wines.filter((w) => (w.cellarId || "default") === activeCellarId);
+  }, [wines, activeCellarId]);
+
+  const scopedExperiencedWines = useMemo(() => {
+    if (!activeCellarId) return experiencedWines;
+    return experiencedWines.filter((w) => (w.cellarId || "default") === activeCellarId);
+  }, [experiencedWines, activeCellarId]);
+
+
   // Compute soon-to-drink
   const winesApproachingEnd = useMemo(() => {
     const current = new Date().getFullYear();
@@ -193,21 +215,13 @@ export default function HomePage() {
   }, [wines]);
 
   const filteredWines = useMemo(() => {
-    if (!searchTerm) return wines;
-    const term = searchTerm.toLowerCase();
-    return wines.filter((w) =>
-      [
-        w.name,
-        w.producer,
-        w.region,
-        w.color,
-        w.location,
-        w.year && String(w.year),
-      ]
-        .filter(Boolean)
-        .some((val) => String(val).toLowerCase().includes(term)),
-    );
-  }, [wines, searchTerm]);
+  const base = scopedWines;
+  if (!searchTerm) return base;
+  const term = searchTerm.toLowerCase();
+  return base.filter((w) => [
+    w.name, w.producer, w.region, w.color, w.location, w.year && String(w.year),
+  ].filter(Boolean).some((val) => String(val).toLowerCase().includes(term)));
+}, [scopedWines, searchTerm]);
 
   // Reverse pairing AI
   const {
@@ -225,11 +239,13 @@ export default function HomePage() {
     handleDeleteWine,
     handleDeleteExperiencedWine,
     handleEraseAllWines,
+    reassignCellar,
     isLoadingAction,
     actionError,
     setActionError,
-  } = useWineActions(db, user?.uid, appId, (msg) =>
+  } = useWineActions(db, user?.uid, appId, (msg ) =>
     setCsvImportStatus({ message: msg, type: "error", errors: [] }),
+    activeCellarId,
   );
 
   // Global error
@@ -297,7 +313,7 @@ export default function HomePage() {
     reader.onload = async (e) => {
       try {
         const { data: parsed } = parseCsv(e.target.result);
-        for (const w of parsed) await handleAddWine(w, wines);
+        for (const w of parsed) await handleAddWine(w, scopedWines);
         setCsvImportStatus({
           message: "Imported successfully!",
           type: "success",
@@ -309,13 +325,13 @@ export default function HomePage() {
     };
     reader.readAsText(csvFile);
   };
-  const handleExportCsv = () => exportToCsv(wines, "my_cellar.csv");
+  const handleExportCsv = () => exportToCsv(scopedWines, "my_cellar.csv");
   const handleExportExperiencedCsv = () =>
-    exportToCsv(experiencedWines, "experienced_wines.csv");
+    exportToCsv(scopedExperiencedWines, "experienced_wines.csv");
 
   const handleFindWineForFood = async () => {
     setShowReversePairingModal(true);
-    await findWineForFood(foodForReversePairing, wines);
+    await findWineForFood(foodForReversePairing, scopedWines);
   };
   const handleFindWineToBuy = async () => {
     setFoodForReversePairing(shoppingFood);
@@ -410,7 +426,7 @@ export default function HomePage() {
           ["drinksoon", "Drink Soon", ClockIcon],
           ["experienced", "Experienced", StarIcon],
           ["pairing", "Food Pairing", SparklesIcon],
-          ["importExport", "Import/Export", UploadIcon],
+          ["importExport", "Settings", UploadIcon],
           ["help", "Help", QuestionMarkCircleIcon],
         ].map(([key, label, Icon]) => (
           <button
@@ -462,7 +478,7 @@ export default function HomePage() {
         )}
         {view === "experienced" && (
           <ExperiencedWinesView
-            experiencedWines={experiencedWines}
+            experiencedWines={scopedExperiencedWines}
             onDelete={handleDeleteExperiencedWine}
           />
         )}
@@ -475,25 +491,42 @@ export default function HomePage() {
             setShoppingFood={setShoppingFood}
             handleFindWineToBuy={handleFindWineToBuy}
             isLoadingReversePairing={isLoadingAI}
-            wines={wines}
+            wines={scopedWines}
             goToCellar={() => setView("cellar")}
           />
         )}
         {view === "importExport" && (
           <ImportExportView
+            cellars={cellars}
+            activeCellarId={activeCellarId}
+            setActiveCellarId={setActiveCellarId}
+            onCreateCellar={createCellar}
+            onDeleteCellar={deleteCellar}
+            onReassignAll={async (fromId, toId) => {
+              const res = await reassignCellar(fromId, toId);
+              const msg = res?.success
+                ? `Moved ${res.movedWines ?? 0} cellar wines and ${res.movedExperienced ?? 0} experienced wines from "${fromId}" to "${toId}".`
+                : res?.error || 'Failed to move wines.';
+              setCsvImportStatus({ message: msg, type: res?.success ? 'success' : 'error', errors: [] });
+            }}
             csvFile={csvFile}
             handleCsvFileChange={(e) => setCsvFile(e.target.files[0])}
             handleImportCsv={handleImportCsv}
             isImportingCsv={isLoadingAction}
             csvImportStatus={csvImportStatus}
             setCsvImportStatus={setCsvImportStatus}
-            wines={wines}
-            experiencedWines={experiencedWines}
+            wines={scopedWines}
+            experiencedWines={scopedExperiencedWines}
             handleExportCsv={handleExportCsv}
             handleExportExperiencedCsv={handleExportExperiencedCsv}
-            confirmEraseAllWines={() =>
-              window.confirm("Really erase all wines?") && handleEraseAllWines()
-            }
+            confirmEraseAllWines={async () => {
+              if (!activeCellarId) {
+                window.alert('Select a cellar first.');
+                return;
+              }
+              const ok = window.confirm(`Erase ALL wines in cellar "${activeCellarId}"? This cannot be undone.`);
+              if (ok) await handleEraseAllWines(activeCellarId);
+            }}
           />
         )}
         {view === "help" && <HelpView />}
@@ -507,11 +540,11 @@ export default function HomePage() {
           wine={wineToEdit}
           onSubmit={async (data) => {
             const res = wineToEdit.id
-              ? await handleUpdateWine(wineToEdit.id, data, wines)
-              : await handleAddWine(data, wines);
+              ? await handleUpdateWine(wineToEdit.id, data, scopedWines)
+              : await handleAddWine(data, scopedWines);
             if (res?.success) setWineToEdit(null);
           }}
-          allWines={wines}
+          allWines={scopedWines}
         />
       )}
       {wineToExperience && (
