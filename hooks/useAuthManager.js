@@ -14,12 +14,20 @@ export const useAuthManager = (authInstance) => {
     setIsLoadingAuth(true);
     setAuthError(null);
     try {
+      if (!authInstance) {
+        throw new Error('Authentication not configured. Check NEXT_PUBLIC_* Firebase env vars.');
+      }
       await signInWithEmailAndPassword(authInstance, email, password);
       return { success: true };
     } catch (error) {
       let message = 'Login failed. Please try again.';
+      if (error && error.message && /not configured/i.test(error.message)) {
+        message = error.message;
+      }
       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
         message = 'Invalid email or password.';
+      } else if (error.code === 'auth/invalid-api-key') {
+        message = 'Invalid Firebase API key. Check NEXT_PUBLIC_FIREBASE_API_KEY in .env.local.';
       }
       setAuthError(message);
       return { success: false, error: message };
@@ -32,14 +40,22 @@ export const useAuthManager = (authInstance) => {
     setIsLoadingAuth(true);
     setAuthError(null);
     try {
+      if (!authInstance) {
+        throw new Error('Authentication not configured. Check NEXT_PUBLIC_* Firebase env vars.');
+      }
       await createUserWithEmailAndPassword(authInstance, email, password);
       return { success: true };
     } catch (error) {
       let message = 'Registration failed. Please try again.';
+      if (error && error.message && /not configured/i.test(error.message)) {
+        message = error.message;
+      }
       if (error.code === 'auth/email-already-in-use') {
         message = 'This email is already registered.';
       } else if (error.code === 'auth/weak-password') {
         message = 'Password should be at least 6 characters.';
+      } else if (error.code === 'auth/invalid-api-key') {
+        message = 'Invalid Firebase API key. Check NEXT_PUBLIC_FIREBASE_API_KEY in .env.local.';
       }
       setAuthError(message);
       return { success: false, error: message };
@@ -83,6 +99,9 @@ export const useAuthManager = (authInstance) => {
     setIsLoadingAuth(true);
     setAuthError(null);
     try {
+      if (!authInstance) {
+        throw new Error('Authentication not configured.');
+      }
       await signOut(authInstance);
       return { success: true };
     } catch (error) {

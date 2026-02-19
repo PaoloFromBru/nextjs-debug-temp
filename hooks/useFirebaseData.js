@@ -19,9 +19,17 @@ export const useFirebaseData = () => {
     setLogLevel('debug');
   }, []);
 
-  // Auth state listener
+  // Auth state listener (guard if auth is not configured)
   useEffect(() => {
     console.debug('DEBUG: Setting up Firebase Auth listener');
+    if (!auth) {
+      console.warn('[useFirebaseData] Firebase auth not initialized. Check NEXT_PUBLIC_* env vars.');
+      setUser(null);
+      setUserId(null);
+      setIsAuthReady(true);
+      return () => {};
+    }
+
     const unsubscribe = onAuthStateChanged(auth, firebaseUser => {
       console.debug('[useFirebaseData] onAuthStateChanged:', firebaseUser);
       if (firebaseUser) {
@@ -42,7 +50,7 @@ export const useFirebaseData = () => {
       console.debug('DEBUG: Cleaning up Auth listener');
       unsubscribe();
     };
-  }, []);
+  }, [auth]);
 
   // Firestore subscriptions
   useEffect(() => {

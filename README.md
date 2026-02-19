@@ -80,3 +80,26 @@ FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY----
 
 Errors from the endpoint usually mean the Firebase credentials or Resend API
 key are missing or invalid. Check the server logs for details.
+## Firebase Client Setup (Required)
+
+Create a `.env.local` file with your Firebase web app credentials. These must be the **client** keys from your Firebase project settings (Web app):
+
+```bash
+NEXT_PUBLIC_FIREBASE_API_KEY=...          # required
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=...      # required
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=...       # required
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=...
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=...
+NEXT_PUBLIC_FIREBASE_APP_ID=...           # required
+NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=...
+```
+
+If any of the required variables are missing, the app will log an error and disable Firebase Auth/Firestore on the client to avoid runtime crashes (e.g. `auth/invalid-api-key`).
+
+### Gemini Model Config (Optional)
+
+```bash
+GEMINI_API_KEY=...
+GEMINI_MODEL=gemini-2.5-flash            # optional; 2.0 IDs auto-map to 2.5
+GEMINI_API_VERSION=v1beta                # or v1 when available
+```
