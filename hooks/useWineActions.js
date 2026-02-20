@@ -10,9 +10,10 @@ import {
   writeBatch,
   getDocs,
   query,
+  where,
 } from 'firebase/firestore';
 
-export default function useWineActions(db, userId, appId, setError) {
+export default function useWineActions(db, userId, appId, setError, cellarId) {
   const [isLoadingAction, setIsLoadingAction] = useState(false);
   const [actionError, setActionError] = useState(null);
 
@@ -38,6 +39,7 @@ export default function useWineActions(db, userId, appId, setError) {
       if (isLocationTaken) return errorOut(`Location "${wineData.location}" is already in use.`);
 
       await addDoc(collection(db, winesCollectionPath), {
+        cellarId: cellarId || 'default',
         ...wineData,
         year: wineData?.year ? parseInt(wineData.year, 10) : null,
         drinkingWindowStartYear: wineData?.drinkingWindowStartYear
@@ -71,6 +73,7 @@ export default function useWineActions(db, userId, appId, setError) {
       const wineDocRef = doc(db, winesCollectionPath, wineId);
       await updateDoc(wineDocRef, {
         ...wineData,
+        cellarId: wineData?.cellarId || cellarId || 'default',
         year: wineData?.year ? parseInt(wineData.year, 10) : null,
         drinkingWindowStartYear: wineData?.drinkingWindowStartYear
           ? parseInt(wineData.drinkingWindowStartYear, 10)
@@ -118,6 +121,7 @@ export default function useWineActions(db, userId, appId, setError) {
       const expDocRef = doc(db, experiencedWinesCollectionPath, experiencedWineId);
       const wineDocRef = doc(db, winesCollectionPath, experiencedWineId);
       const baseData = {
+        cellarId: wineData.cellarId || cellarId || 'default',
         name: wineData.name || '',
         producer: wineData.producer || '',
         year: wineData.year ? parseInt(wineData.year, 10) : null,
@@ -157,6 +161,7 @@ export default function useWineActions(db, userId, appId, setError) {
 
       batch.set(experiencedWineDocRef, {
         ...wineToMove,
+        cellarId: wineToMove.cellarId || cellarId || 'default',
         tastingNotes: notes,
         rating: rating,
         consumedAt: consumedDate ? Timestamp.fromDate(new Date(consumedDate)) : Timestamp.now(),
@@ -200,12 +205,72 @@ export default function useWineActions(db, userId, appId, setError) {
     }
   };
 
-  const handleEraseAllWines = async () => {
+  // Bulk reassign wines (and experienced wines) from one cellar to another
+  const reassignCellar = async (fromId, toId) => {
+    if (!db || !userId) return errorOut('Database not ready or user not logged in.');
+    if (!fromId || !toId) return errorOut('Both source and target cellar ids are required.');
+    if (fromId === toId) return { success: true, message: 'No change (same cellar).' };
+    setIsLoadingAction(true);
+    try {
+      const winesRef = collection(db, winesCollectionPath);
+      const expRef = collection(db, experiencedWinesCollectionPath);
+
+      // Support legacy docs without `cellarId` when moving from "default".
+      let winesToMove = [];
+      let expToMove = [];
+
+      if (fromId === 'default') {
+        const [wAll, eAll] = await Promise.all([
+          getDocs(winesRef),
+          getDocs(expRef),
+        ]);
+
+        wAll.forEach((d) => {
+          const data = d.data() || {};
+          if (!("cellarId" in data) || data.cellarId === 'default') {
+            winesToMove.push(d);
+          }
+        });
+        eAll.forEach((d) => {
+          const data = d.data() || {};
+          if (!("cellarId" in data) || data.cellarId === 'default') {
+            expToMove.push(d);
+          }
+        });
+      } else {
+        const [wSnap, eSnap] = await Promise.all([
+          getDocs(query(winesRef, where('cellarId', '==', fromId))),
+          getDocs(query(expRef, where('cellarId', '==', fromId))),
+        ]);
+        winesToMove = wSnap.docs;
+        expToMove = eSnap.docs;
+      }
+
+      if (winesToMove.length === 0 && expToMove.length === 0) {
+        return { success: true, movedWines: 0, movedExperienced: 0 };
+      }
+
+      const batch = writeBatch(db);
+      winesToMove.forEach((d) => batch.update(d.ref, { cellarId: toId }));
+      expToMove.forEach((d) => batch.update(d.ref, { cellarId: toId }));
+      await batch.commit();
+      return { success: true, movedWines: winesToMove.length, movedExperienced: expToMove.length };
+    } catch (err) {
+      return errorOut(`Failed to reassign wines: ${err.message}`, err);
+    } finally {
+      setIsLoadingAction(false);
+    }
+  };
+
+  const handleEraseAllWines = async (targetCellarId = cellarId) => {
     if (!db || !userId) return errorOut('Database not ready or user not logged in.');
     setIsLoadingAction(true);
     try {
-      const q = query(collection(db, winesCollectionPath));
-      const querySnapshot = await getDocs(q);
+      let qRef = query(collection(db, winesCollectionPath));
+      if (targetCellarId) {
+        qRef = query(collection(db, winesCollectionPath), where('cellarId', '==', targetCellarId));
+      }
+      const querySnapshot = await getDocs(qRef);
 
       if (querySnapshot.empty) {
         setError('Your cellar is already empty!', 'info');
@@ -217,7 +282,7 @@ export default function useWineActions(db, userId, appId, setError) {
         batch.delete(doc(db, winesCollectionPath, docSnap.id));
       });
       await batch.commit();
-      return { success: true, message: 'All wines have been successfully erased from your cellar.' };
+      return { success: true, message: targetCellarId ? `All wines in cellar "${targetCellarId}" erased.` : 'All wines have been successfully erased from your cellar.' };
     } catch (err) {
       return errorOut(`Failed to erase all wines: ${err.message}`, err);
     } finally {
@@ -241,6 +306,7 @@ export default function useWineActions(db, userId, appId, setError) {
     handleDeleteWine,
     handleDeleteExperiencedWine,
     handleEraseAllWines,
+    reassignCellar,
     isLoadingAction,
     actionError,
     setActionError,

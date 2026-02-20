@@ -77,7 +77,11 @@ const ExperiencedWinesView = ({ experiencedWines: experiencedWinesProp, onDelete
             if (res?.success) setWineToEdit(null);
           }}
           onMoveBack={async data => {
-            const res = await handleRestoreExperiencedWine(wineToEdit.id, data, cellarWines);
+            const res = await handleRestoreExperiencedWine(
+              wineToEdit.id,
+              { ...data, cellarId: wineToEdit.cellarId },
+              cellarWines
+            );
             if (res?.success) setWineToEdit(null);
           }}
         />

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import AlertMessage from '@/components/AlertMessage';
 
 const UploadIcon = ({ className = "w-5 h-5" }) => (
@@ -18,6 +18,13 @@ const TrashIcon = ({ className = "w-5 h-5" }) => (
 );
 
 export default function ImportExportView({
+  // Cellars management
+  cellars = [],
+  activeCellarId = null,
+  setActiveCellarId = () => {},
+  onCreateCellar = async () => {},
+  onDeleteCellar = async () => {},
+  onReassignAll = async () => {},
   csvFile,
   handleCsvFileChange,
   handleImportCsv,
@@ -32,8 +39,173 @@ export default function ImportExportView({
 }) {
   const { message = '', type = '', errors = [] } = csvImportStatus;
 
+  // Local UI state for cellar management
+  const [newCellarId, setNewCellarId] = useState('');
+  const [newCellarName, setNewCellarName] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState('');
+  const [reassignTarget, setReassignTarget] = useState('');
+  const [moveFrom, setMoveFrom] = useState('');
+  const [moveTo, setMoveTo] = useState('');
+
   return (
     <>
+      {/* Cellars Management */}
+      <section className="mb-8 p-6 bg-white dark:bg-slate-800 rounded-lg shadow">
+        <h2 className="text-xl font-semibold text-slate-700 dark:text-slate-200 mb-4">Cellars</h2>
+
+        {/* Select Active Cellar */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium mb-2">Select Active Cellar</label>
+          <select
+            value={activeCellarId ?? ''}
+            onChange={(e) => setActiveCellarId(e.target.value)}
+            className="w-full sm:w-80 p-2 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-900"
+          >
+            {/* Always expose a virtual Default option */}
+            <option value="default">Default (no cellar tag)</option>
+            {cellars.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name || c.id} ({c.id})
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Search, pairing, and exports use the active cellar.</p>
+        </div>
+
+        {/* Add Cellar */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium mb-2">Add Cellar</label>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <input
+              type="text"
+              placeholder="id (e.g., belgium)"
+              value={newCellarId}
+              onChange={(e) => setNewCellarId(e.target.value)}
+              className="w-full sm:w-56 p-2 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-900"
+            />
+            <input
+              type="text"
+              placeholder="name (optional)"
+              value={newCellarName}
+              onChange={(e) => setNewCellarName(e.target.value)}
+              className="w-full sm:w-72 p-2 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-900"
+            />
+            <button
+              onClick={async () => {
+                if (!newCellarId.trim()) return;
+                await onCreateCellar(newCellarId.trim(), newCellarName.trim());
+                setNewCellarId('');
+                setNewCellarName('');
+              }}
+              className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded"
+            >
+              Add Cellar
+            </button>
+          </div>
+        </div>
+
+        {/* Delete Cellar */}
+        <div className="mb-2">
+          <label className="block text-sm font-medium mb-2">Delete Cellar</label>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <select
+              value={deleteTarget}
+              onChange={(e) => setDeleteTarget(e.target.value)}
+              className="w-full sm:w-64 p-2 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-900"
+            >
+              <option value="">Select cellar to delete</option>
+              {/* Allow deleting only real cellars, not the virtual default */}
+              {cellars.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name || c.id} ({c.id})
+                </option>
+              ))}
+            </select>
+            <select
+              value={reassignTarget}
+              onChange={(e) => setReassignTarget(e.target.value)}
+              className="w-full sm:w-72 p-2 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-900"
+            >
+              <option value="">— optional: reassign wines to —</option>
+              {cellars
+                .filter((c) => c.id !== deleteTarget)
+                .map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name || c.id} ({c.id})
+                  </option>
+                ))}
+            </select>
+            <button
+              onClick={async () => {
+                if (!deleteTarget) return;
+                const ok = confirm('Delete cellar "' + deleteTarget + '"?');
+                if (!ok) return;
+                await onDeleteCellar(deleteTarget, { reassignTo: reassignTarget || undefined });
+                if (activeCellarId === deleteTarget) setActiveCellarId(reassignTarget || (cellars.find((c) => c.id !== deleteTarget)?.id || null));
+                setDeleteTarget('');
+                setReassignTarget('');
+              }}
+              className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded disabled:opacity-60"
+              disabled={!deleteTarget}
+            >
+              Delete Cellar
+            </button>
+          </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">If not reassigned, cellar must be empty.</p>
+        </div>
+      </section>
+
+      {/* Bulk Move Wines */}
+      <section className="mb-8 p-6 bg-white dark:bg-slate-800 rounded-lg shadow">
+        <h2 className="text-xl font-semibold text-slate-700 dark:text-slate-200 mb-3">Bulk Move Wines</h2>
+        <div className="flex flex-col sm:flex-row gap-2 items-end">
+          <div className="flex flex-col">
+            <label className="text-sm mb-1">From cellar</label>
+            <select
+              value={moveFrom}
+              onChange={(e) => setMoveFrom(e.target.value)}
+              className="w-56 p-2 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-900"
+            >
+              <option value="">Select</option>
+              <option value="default">Default (no cellar tag)</option>
+              {cellars.map((c) => (
+                <option key={c.id} value={c.id}>{c.name || c.id} ({c.id})</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex flex-col">
+            <label className="text-sm mb-1">To cellar</label>
+            <select
+              value={moveTo}
+              onChange={(e) => setMoveTo(e.target.value)}
+              className="w-56 p-2 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-900"
+            >
+              <option value="">Select</option>
+              {cellars
+                .filter((c) => c.id !== moveFrom)
+                .map((c) => (
+                  <option key={c.id} value={c.id}>{c.name || c.id} ({c.id})</option>
+                ))}
+            </select>
+          </div>
+          <button
+            onClick={async () => {
+              if (!moveFrom || !moveTo || moveFrom === moveTo) return;
+              const ok = confirm(`Move ALL wines (including experienced) from "${moveFrom}" to "${moveTo}"?`);
+              if (!ok) return;
+              await onReassignAll(moveFrom, moveTo);
+              setMoveFrom('');
+              setMoveTo('');
+            }}
+            disabled={!moveFrom || !moveTo || moveFrom === moveTo}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded disabled:opacity-60"
+          >
+            Move All Wines
+          </button>
+        </div>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">Useful for initial migration (e.g., default → Steenokkerzeel).</p>
+      </section>
+
       {/* Import */}
       <section className="mb-8 p-6 bg-white dark:bg-slate-800 rounded-lg shadow">
         <h2 className="text-xl font-semibold text-slate-700 dark:text-slate-200 mb-3">
@@ -113,7 +285,7 @@ export default function ImportExportView({
           className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded disabled:opacity-60 flex items-center space-x-2"
         >
           <TrashIcon />
-          <span>Erase All Wines</span>
+          <span>Erase All Wines (Active Cellar)</span>
         </button>
       </section>
     </>

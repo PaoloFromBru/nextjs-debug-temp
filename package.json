@@ -6,7 +6,12 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "migrate:cellars": "APP_ID=$npm_package_config_appId node scripts/migrations/2026-02-19-add-cellarId.js",
+    "migrate:reassign": "APP_ID=$npm_package_config_appId node scripts/migrations/2026-02-19-reassign-by-location.js"
+  },
+  "config": {
+    "appId": "my-public-wine-cellar-data"
   },
   "dependencies": {
     "firebase": "^11.10.0",
