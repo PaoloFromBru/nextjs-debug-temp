@@ -194,6 +194,14 @@ export default function HomePage() {
     deleteCellar,
   } = useCellars(db, user?.uid, appId);
 
+  // Derive a human label for the active cellar
+  const activeCellarLabel = useMemo(() => {
+    if (!activeCellarId) return null;
+    if (activeCellarId === "default") return "Default";
+    const found = cellars.find((c) => c.id === activeCellarId);
+    return found ? (found.name || found.id) : activeCellarId;
+  }, [activeCellarId, cellars]);
+
   // Scope wines by active cellar
   const scopedWines = useMemo(() => {
     if (!activeCellarId) return wines;
@@ -405,6 +413,13 @@ export default function HomePage() {
             <div className="flex items-center space-x-1 mr-4 text-sm text-gray-700 dark:text-gray-300">
               <UserIcon />
               <span>{user.email}</span>
+            </div>
+          )}
+          {activeCellarId && (
+            <div className="mr-auto ml-2 text-sm text-gray-700 dark:text-gray-300">
+              <span className="px-2 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200">
+                Active Cellar: {activeCellarLabel} ({activeCellarId})
+              </span>
             </div>
           )}
           {user ? (
