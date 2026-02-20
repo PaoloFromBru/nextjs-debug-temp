@@ -54,7 +54,7 @@ export const exportToCsv = (data, fileName, headers, isExperienced = false) => {
 
     const csvHeaders = headers || (isExperienced 
         ? ["Name", "Producer", "Year", "Region", "Color", "Location", "DrinkingWindowStartYear", "DrinkingWindowEndYear", "ConsumedAt", "Rating", "TastingNotes"]
-        : ["Name", "Producer", "Year", "Region", "Color", "Location", "DrinkingWindowStartYear", "DrinkingWindowEndYear"]);
+        : ["Name", "Producer", "Year", "Region", "Color", "Location", "DrinkingWindowStartYear", "DrinkingWindowEndYear", "Notes"]);
     
     // Escape content with double quotes and handle semicolons
     const escapeCsvField = (field) => {
@@ -93,7 +93,8 @@ export const exportToCsv = (data, fileName, headers, isExperienced = false) => {
             escapeCsvField(item.color),
             escapeCsvField(item.location),
             escapeCsvField(startYear),
-            escapeCsvField(endYear)
+            escapeCsvField(endYear),
+            escapeCsvField(item.notes)
         ];
         csvRows.push(row.join(';'));
     });

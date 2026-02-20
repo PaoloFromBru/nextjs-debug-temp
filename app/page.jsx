@@ -313,7 +313,21 @@ export default function HomePage() {
     reader.onload = async (e) => {
       try {
         const { data: parsed } = parseCsv(e.target.result);
-        for (const w of parsed) await handleAddWine(w, scopedWines);
+        // Map possible CSV headers to our fields; tolerate 'notes' if present
+        for (const w of parsed) {
+          const mapped = {
+            name: w.name || w.Name,
+            producer: w.producer || w.Producer,
+            year: w.year || w.Year,
+            region: w.region || w.Region,
+            color: w.color || w.Color,
+            location: w.location || w.Location,
+            drinkingWindowStartYear: w.drinkingwindowstartyear || w.DrinkingWindowStartYear,
+            drinkingWindowEndYear: w.drinkingwindowendyear || w.DrinkingWindowEndYear,
+            notes: w.notes || w.Notes,
+          };
+          await handleAddWine(mapped, scopedWines);
+        }
         setCsvImportStatus({
           message: "Imported successfully!",
           type: "success",
