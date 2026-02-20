@@ -219,7 +219,7 @@ export default function HomePage() {
   if (!searchTerm) return base;
   const term = searchTerm.toLowerCase();
   return base.filter((w) => [
-    w.name, w.producer, w.region, w.color, w.location, w.year && String(w.year),
+    w.name, w.producer, w.region, w.color, w.location, w.notes, w.year && String(w.year),
   ].filter(Boolean).some((val) => String(val).toLowerCase().includes(term)));
 }, [scopedWines, searchTerm]);
 

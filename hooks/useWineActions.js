@@ -74,6 +74,7 @@ export default function useWineActions(db, userId, appId, setError, cellarId) {
       await updateDoc(wineDocRef, {
         ...wineData,
         cellarId: wineData?.cellarId || cellarId || 'default',
+        notes: wineData?.notes || '',
         year: wineData?.year ? parseInt(wineData.year, 10) : null,
         drinkingWindowStartYear: wineData?.drinkingWindowStartYear
           ? parseInt(wineData.drinkingWindowStartYear, 10)

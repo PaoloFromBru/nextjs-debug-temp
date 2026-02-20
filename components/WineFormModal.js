@@ -15,6 +15,7 @@ const WineFormModal = ({ isOpen, onClose, onSubmit, wine, allWines, cellars = []
         color: 'red',
         location: '',
         cellarId: 'default',
+        notes: '',
         drinkingWindowStartYear: '',
         drinkingWindowEndYear: ''
     });
@@ -35,11 +36,12 @@ const WineFormModal = ({ isOpen, onClose, onSubmit, wine, allWines, cellars = []
                 color: wine.color || 'red',
                 location: wine.location || '',
                 cellarId: wine.cellarId || 'default',
+                notes: wine.notes || '',
                 drinkingWindowStartYear: wine.drinkingWindowStartYear || '',
                 drinkingWindowEndYear: wine.drinkingWindowEndYear || ''
             });
         } else {
-            setFormData({ name: '', producer: '', year: '', region: '', color: 'red', location: '', cellarId: activeCellarId || 'default', drinkingWindowStartYear: '', drinkingWindowEndYear: '' });
+            setFormData({ name: '', producer: '', year: '', region: '', color: 'red', location: '', cellarId: activeCellarId || 'default', notes: '', drinkingWindowStartYear: '', drinkingWindowEndYear: '' });
         }
         setFormError('');
         // Removed setIsScanning(false)
@@ -187,6 +189,18 @@ const WineFormModal = ({ isOpen, onClose, onSubmit, wine, allWines, cellars = []
                             id="name"
                             value={formData.name}
                             onChange={handleChange}
+                            className="mt-1 block w-full p-2.5 rounded-md border border-slate-300 dark:border-slate-600 focus:ring-red-500 focus:border-red-500 shadow-sm sm:text-sm dark:bg-slate-700 dark:text-slate-200"
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="notes" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Notes</label>
+                        <textarea
+                            name="notes"
+                            id="notes"
+                            rows="2"
+                            value={formData.notes}
+                            onChange={handleChange}
+                            placeholder="e.g., Gift from Tizio; bought at XYZ on 2025-09-01"
                             className="mt-1 block w-full p-2.5 rounded-md border border-slate-300 dark:border-slate-600 focus:ring-red-500 focus:border-red-500 shadow-sm sm:text-sm dark:bg-slate-700 dark:text-slate-200"
                         />
                     </div>

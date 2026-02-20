@@ -40,6 +40,9 @@ const WineItem = ({ wine, onEdit, onExperience, onPairFood }) => {
                 <p><strong className="text-slate-600 dark:text-slate-300">Region:</strong> <span className="text-slate-700 dark:text-slate-200">{wine.region}</span></p>
                 <p><strong className="text-slate-600 dark:text-slate-300">Color:</strong> <span className="text-slate-700 dark:text-slate-200 capitalize">{wine.color}</span></p>
                 <p><strong className="text-slate-600 dark:text-slate-300">Location:</strong> <span className="text-slate-700 dark:text-slate-200">{wine.location}</span></p>
+                {wine.notes ? (
+                    <p><strong className="text-slate-600 dark:text-slate-300">Notes:</strong> <span className="text-slate-700 dark:text-slate-200 italic">{wine.notes}</span></p>
+                ) : null}
                 {/* Display Drinking Window if available */}
                 {(wine.drinkingWindowStartYear && wine.drinkingWindowEndYear) ? (
                     <p><strong className="text-slate-600 dark:text-slate-300">Drink Window:</strong> <span className="text-slate-700 dark:text-slate-200">{wine.drinkingWindowStartYear} - {wine.drinkingWindowEndYear}</span></p>
