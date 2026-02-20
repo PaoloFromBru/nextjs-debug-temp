@@ -415,13 +415,24 @@ export default function HomePage() {
               <span>{user.email}</span>
             </div>
           )}
-          {activeCellarId && (
-            <div className="mr-auto ml-2 text-sm text-gray-700 dark:text-gray-300">
-              <span className="px-2 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200">
-                Active Cellar: {activeCellarLabel} ({activeCellarId})
-              </span>
-            </div>
-          )}
+          <div className="mr-auto ml-2 flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+            <span className="px-2 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200">
+              Active Cellar: {activeCellarLabel || 'Default'} ({activeCellarId || 'default'})
+            </span>
+            <select
+              value={activeCellarId ?? 'default'}
+              onChange={(e) => setActiveCellarId(e.target.value)}
+              className="p-1 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700"
+              title="Quick switch cellar"
+            >
+              <option value="default">Default</option>
+              {cellars.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {(c.name || c.id)} ({c.id})
+                </option>
+              ))}
+            </select>
+          </div>
           {user ? (
             <button
               onClick={logout}
