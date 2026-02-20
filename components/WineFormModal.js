@@ -6,7 +6,7 @@ import { parseLabelText } from '@/utils/labelParser';
 import Modal from './Modal.js';
 import AlertMessage from './AlertMessage.js';
 
-const WineFormModal = ({ isOpen, onClose, onSubmit, wine, allWines }) => {
+const WineFormModal = ({ isOpen, onClose, onSubmit, wine, allWines, cellars = [], activeCellarId = 'default' }) => {
     const [formData, setFormData] = useState({
         name: '',
         producer: '',
@@ -14,6 +14,7 @@ const WineFormModal = ({ isOpen, onClose, onSubmit, wine, allWines }) => {
         region: '',
         color: 'red',
         location: '',
+        cellarId: 'default',
         drinkingWindowStartYear: '',
         drinkingWindowEndYear: ''
     });
@@ -33,11 +34,12 @@ const WineFormModal = ({ isOpen, onClose, onSubmit, wine, allWines }) => {
                 region: wine.region || '',
                 color: wine.color || 'red',
                 location: wine.location || '',
+                cellarId: wine.cellarId || 'default',
                 drinkingWindowStartYear: wine.drinkingWindowStartYear || '',
                 drinkingWindowEndYear: wine.drinkingWindowEndYear || ''
             });
         } else {
-            setFormData({ name: '', producer: '', year: '', region: '', color: 'red', location: '', drinkingWindowStartYear: '', drinkingWindowEndYear: '' });
+            setFormData({ name: '', producer: '', year: '', region: '', color: 'red', location: '', cellarId: activeCellarId || 'default', drinkingWindowStartYear: '', drinkingWindowEndYear: '' });
         }
         setFormError('');
         // Removed setIsScanning(false)
@@ -236,6 +238,21 @@ const WineFormModal = ({ isOpen, onClose, onSubmit, wine, allWines }) => {
                         >
                             {wineColorOptions.map(opt => (
                                 <option key={opt} value={opt} className="capitalize">{opt.charAt(0).toUpperCase() + opt.slice(1)}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div>
+                        <label htmlFor="cellarId" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Cellar</label>
+                        <select
+                            name="cellarId"
+                            id="cellarId"
+                            value={formData.cellarId}
+                            onChange={handleChange}
+                            className="mt-1 block w-full p-2.5 rounded-md border border-slate-300 dark:border-slate-600 focus:ring-red-500 focus:border-red-500 shadow-sm sm:text-sm dark:bg-slate-700 dark:text-slate-200"
+                        >
+                            <option value="default">Default (no cellar tag)</option>
+                            {cellars.map(c => (
+                                <option key={c.id} value={c.id}>{(c.name || c.id)} ({c.id})</option>
                             ))}
                         </select>
                     </div>

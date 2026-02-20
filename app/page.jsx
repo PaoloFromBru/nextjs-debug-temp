@@ -538,6 +538,8 @@ export default function HomePage() {
           isOpen
           onClose={() => setWineToEdit(null)}
           wine={wineToEdit}
+          cellars={cellars}
+          activeCellarId={activeCellarId}
           onSubmit={async (data) => {
             const res = wineToEdit.id
               ? await handleUpdateWine(wineToEdit.id, data, scopedWines)

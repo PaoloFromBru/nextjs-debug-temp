@@ -28,6 +28,7 @@ const HelpView = () => {
               'Use the search bar to find specific wines by producer, region, year, etc.',
               'Click "Add New Wine" to manually enter new bottles into your cellar.',
               'Edit existing wine details by clicking on the wine card.',
+              'In Edit, use the "Cellar" dropdown to move a single wine to another cellar.',
               'Move wines to "Experienced Wines" once consumed, adding tasting notes and a rating.',
             ]
           },
@@ -50,6 +51,7 @@ const HelpView = () => {
             points: [
               '**Import Wines:** Upload a CSV file to add multiple wines to your cellar at once. Refer to the expected CSV headers for formatting.',
               '**Cellars:** Add multiple cellars (e.g., Belgium, Brussels), select the active one to scope search, Drink Soon, pairing, and exports.',
+              '**Bulk Move Wines:** Move ALL wines (including experienced wines) from one cellar to another. Choosing "Default" as source also includes legacy bottles without a cellar tag.',
               '**Export Wines:** Download your active cellar or experienced wines data as a CSV file for backup or external use.',
               '**Danger Zone:** Permanently erase all wines from your active cellar (use with caution!).',
             ]

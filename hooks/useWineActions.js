@@ -73,6 +73,7 @@ export default function useWineActions(db, userId, appId, setError, cellarId) {
       const wineDocRef = doc(db, winesCollectionPath, wineId);
       await updateDoc(wineDocRef, {
         ...wineData,
+        cellarId: wineData?.cellarId || cellarId || 'default',
         year: wineData?.year ? parseInt(wineData.year, 10) : null,
         drinkingWindowStartYear: wineData?.drinkingWindowStartYear
           ? parseInt(wineData.drinkingWindowStartYear, 10)
@@ -213,15 +214,47 @@ export default function useWineActions(db, userId, appId, setError, cellarId) {
     try {
       const winesRef = collection(db, winesCollectionPath);
       const expRef = collection(db, experiencedWinesCollectionPath);
-      const [wSnap, eSnap] = await Promise.all([
-        getDocs(query(winesRef, where('cellarId', '==', fromId))),
-        getDocs(query(expRef, where('cellarId', '==', fromId))),
-      ]);
+
+      // Support legacy docs without `cellarId` when moving from "default".
+      let winesToMove = [];
+      let expToMove = [];
+
+      if (fromId === 'default') {
+        const [wAll, eAll] = await Promise.all([
+          getDocs(winesRef),
+          getDocs(expRef),
+        ]);
+
+        wAll.forEach((d) => {
+          const data = d.data() || {};
+          if (!("cellarId" in data) || data.cellarId === 'default') {
+            winesToMove.push(d);
+          }
+        });
+        eAll.forEach((d) => {
+          const data = d.data() || {};
+          if (!("cellarId" in data) || data.cellarId === 'default') {
+            expToMove.push(d);
+          }
+        });
+      } else {
+        const [wSnap, eSnap] = await Promise.all([
+          getDocs(query(winesRef, where('cellarId', '==', fromId))),
+          getDocs(query(expRef, where('cellarId', '==', fromId))),
+        ]);
+        winesToMove = wSnap.docs;
+        expToMove = eSnap.docs;
+      }
+
+      if (winesToMove.length === 0 && expToMove.length === 0) {
+        return { success: true, movedWines: 0, movedExperienced: 0 };
+      }
+
       const batch = writeBatch(db);
-      wSnap.forEach((d) => batch.update(d.ref, { cellarId: toId }));
-      eSnap.forEach((d) => batch.update(d.ref, { cellarId: toId }));
+      winesToMove.forEach((d) => batch.update(d.ref, { cellarId: toId }));
+      expToMove.forEach((d) => batch.update(d.ref, { cellarId: toId }));
       await batch.commit();
-      return { success: true, movedWines: wSnap.size, movedExperienced: eSnap.size };
+      return { success: true, movedWines: winesToMove.length, movedExperienced: expToMove.length };
     } catch (err) {
       return errorOut(`Failed to reassign wines: ${err.message}`, err);
     } finally {
