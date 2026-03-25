@@ -106,6 +106,7 @@ If any of the required variables are missing, the app will log an error and disa
 
 ```bash
 GEMINI_API_KEY=...
-GEMINI_MODEL=gemini-2.5-flash            # optional; 2.0 IDs auto-map to 2.5
+# Default now targets Gemini 3.1 Flash Lite (Preview)
+GEMINI_MODEL=gemini-3.1-flash-lite-preview  # optional; 2.0 IDs still auto-map to 2.5
 GEMINI_API_VERSION=v1beta                # or v1 when available
 ```

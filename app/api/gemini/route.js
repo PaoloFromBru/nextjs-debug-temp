@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 
 // Defaults and helpers
-const DEFAULT_MODEL = 'gemini-2.5-flash';
+// Move default to Gemini 3.1 Flash Lite (Preview)
+const DEFAULT_MODEL = 'gemini-3.1-flash-lite-preview';
 const DEFAULT_API_VERSION = (process.env.GEMINI_API_VERSION || 'v1beta').trim();
 
 function normalizeAndMapModel(envModel) {
