@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 
 // Defaults and helpers
-// Move default to Gemini 3.1 Flash Lite (Preview)
-const DEFAULT_MODEL = 'gemini-3.1-flash-lite-preview';
+const DEFAULT_MODEL = 'gemini-3.1-flash-lite';
 const DEFAULT_API_VERSION = (process.env.GEMINI_API_VERSION || 'v1beta').trim();
 
 function normalizeAndMapModel(envModel) {
@@ -86,7 +85,7 @@ export async function POST(request) {
       } else if (origLower.startsWith('gemini-2.0-flash')) {
         fallbackModel = 'gemini-2.5-flash';
       } else if (!mappingApplied) {
-        // Generic safety net: retry with our default 2.5 flash
+        // Generic safety net: retry with our default model
         fallbackModel = DEFAULT_MODEL;
       }
 
