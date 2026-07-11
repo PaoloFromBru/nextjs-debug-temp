@@ -7,11 +7,48 @@ import AlertMessage from './AlertMessage.js';
 
 const WINE_COLOR_OPTIONS = ['red', 'white', 'rose', 'sparkling', 'other'];
 
-const fileToBase64 = (file) => new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result).split(',')[1] || '');
-    reader.onerror = () => reject(new Error('Failed to read image file.'));
-    reader.readAsDataURL(file);
+// Serverless function bodies (Vercel) cap out around 4.5MB, and phone camera
+// photos routinely exceed that once base64-encoded. Downscale/recompress
+// client-side, backing off further if the result is still too large.
+const MAX_LABEL_IMAGE_BASE64_LENGTH = 3_000_000;
+const LABEL_IMAGE_ATTEMPTS = [
+    { maxDimension: 1600, quality: 0.85 },
+    { maxDimension: 1200, quality: 0.75 },
+    { maxDimension: 900, quality: 0.6 },
+    { maxDimension: 700, quality: 0.5 },
+];
+
+const resizeImageToBase64 = (file) => new Promise((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+        const naturalWidth = img.naturalWidth || img.width;
+        const naturalHeight = img.naturalHeight || img.height;
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        let base64 = '';
+        for (const { maxDimension, quality } of LABEL_IMAGE_ATTEMPTS) {
+            const scale = Math.min(1, maxDimension / Math.max(naturalWidth, naturalHeight));
+            canvas.width = Math.round(naturalWidth * scale);
+            canvas.height = Math.round(naturalHeight * scale);
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            base64 = canvas.toDataURL('image/jpeg', quality).split(',')[1] || '';
+            if (base64.length <= MAX_LABEL_IMAGE_BASE64_LENGTH) break;
+        }
+
+        if (!base64) {
+            reject(new Error('Failed to process image file.'));
+            return;
+        }
+        resolve(base64);
+    };
+    img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error('Failed to load image file.'));
+    };
+    img.src = objectUrl;
 });
 
 const WineFormModal = ({ isOpen, onClose, onSubmit, wine, allWines, cellars = [], activeCellarId = 'default' }) => {
@@ -75,7 +112,7 @@ const WineFormModal = ({ isOpen, onClose, onSubmit, wine, allWines, cellars = []
         setIsProcessingImage(true);
         setFormError('');
         try {
-            const base64Data = await fileToBase64(file);
+            const base64Data = await resizeImageToBase64(file);
             const prompt = `You are reading a photo of a wine bottle label. Extract these fields and respond with ONLY a JSON object (no markdown fences, no explanation):
 {
   "producer": string or null,
@@ -95,7 +132,7 @@ If a field cannot be determined from the label, use null. Do not guess.`;
                             role: 'user',
                             parts: [
                                 { text: prompt },
-                                { inlineData: { mimeType: file.type || 'image/jpeg', data: base64Data } }
+                                { inlineData: { mimeType: 'image/jpeg', data: base64Data } }
                             ]
                         }
                     ],
