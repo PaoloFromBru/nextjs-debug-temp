@@ -2,9 +2,17 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { parseLabelText } from '@/utils/labelParser';
 import Modal from './Modal.js';
 import AlertMessage from './AlertMessage.js';
+
+const WINE_COLOR_OPTIONS = ['red', 'white', 'rose', 'sparkling', 'other'];
+
+const fileToBase64 = (file) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(',')[1] || '');
+    reader.onerror = () => reject(new Error('Failed to read image file.'));
+    reader.readAsDataURL(file);
+});
 
 const WineFormModal = ({ isOpen, onClose, onSubmit, wine, allWines, cellars = [], activeCellarId = 'default' }) => {
     const [formData, setFormData] = useState({
@@ -65,16 +73,80 @@ const WineFormModal = ({ isOpen, onClose, onSubmit, wine, allWines, cellars = []
         const file = e.target.files && e.target.files[0];
         if (!file) return;
         setIsProcessingImage(true);
+        setFormError('');
         try {
-            const { createWorker } = await import('tesseract.js');
-            const worker = await createWorker('eng');
-            const { data: { text } } = await worker.recognize(file);
-            await worker.terminate();
-            const parsed = parseLabelText(text);
-            setFormData(prev => ({ ...prev, ...parsed }));
+            const base64Data = await fileToBase64(file);
+            const prompt = `You are reading a photo of a wine bottle label. Extract these fields and respond with ONLY a JSON object (no markdown fences, no explanation):
+{
+  "producer": string or null,
+  "name": string or null (the wine's specific name/cuvee, if distinct from the producer),
+  "year": string or null (4-digit vintage year),
+  "region": string or null,
+  "color": one of "red", "white", "rose", "sparkling", "other", or null
+}
+If a field cannot be determined from the label, use null. Do not guess.`;
+
+            const res = await fetch('/api/gemini', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [
+                        {
+                            role: 'user',
+                            parts: [
+                                { text: prompt },
+                                { inlineData: { mimeType: file.type || 'image/jpeg', data: base64Data } }
+                            ]
+                        }
+                    ],
+                    safetySettings: [
+                        { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_ONLY_HIGH' },
+                        { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
+                        { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_ONLY_HIGH' },
+                        { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_ONLY_HIGH' }
+                    ]
+                })
+            });
+
+            if (!res.ok) throw new Error(await res.text());
+            const data = await res.json();
+
+            if (data?.promptFeedback?.blockReason) {
+                throw new Error('Label photo was blocked by the AI safety filter. Please fill in the fields manually.');
+            }
+
+            const candidate = data?.candidates?.[0];
+            if (!candidate || candidate.finishReason === 'SAFETY') {
+                throw new Error('Could not read the label automatically. Please fill in the fields manually.');
+            }
+
+            const rawText = candidate?.content?.parts?.[0]?.text || '';
+            const cleaned = rawText.replace(/```json\s*|```/g, '').trim();
+
+            let parsed;
+            try {
+                parsed = JSON.parse(cleaned);
+            } catch {
+                throw new Error('Could not understand the label scan result. Please fill in the fields manually.');
+            }
+
+            const updates = {};
+            if (parsed.producer) updates.producer = String(parsed.producer).trim();
+            if (parsed.name) updates.name = String(parsed.name).trim();
+            if (parsed.year && /^\d{4}$/.test(String(parsed.year).trim())) updates.year = String(parsed.year).trim();
+            if (parsed.region) updates.region = String(parsed.region).trim();
+            if (parsed.color && WINE_COLOR_OPTIONS.includes(String(parsed.color).toLowerCase())) {
+                updates.color = String(parsed.color).toLowerCase();
+            }
+
+            if (Object.keys(updates).length === 0) {
+                setFormError('Could not read any fields from the label. Please fill in the fields manually.');
+            } else {
+                setFormData(prev => ({ ...prev, ...updates }));
+            }
         } catch (err) {
             console.error('Label scan error', err);
-            setFormError('Failed to read wine label.');
+            setFormError(err.message || 'Failed to read wine label.');
         } finally {
             setIsProcessingImage(false);
             if (fileInputRef.current) fileInputRef.current.value = '';
@@ -169,7 +241,7 @@ const WineFormModal = ({ isOpen, onClose, onSubmit, wine, allWines, cellars = []
         onClose();
     };
 
-    const wineColorOptions = ['red', 'white', 'rose', 'sparkling', 'other'];
+    const wineColorOptions = WINE_COLOR_OPTIONS;
     const canAskAI = formData.name && formData.producer && formData.year && formData.color;
 
     // Removed captureAndSendToCloudFunction function
