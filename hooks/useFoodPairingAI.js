@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { auth } from '@/lib/firebaseClient';
 
 export default function useFoodPairingAI() {
   const [loading, setLoading] = useState(false);
@@ -27,10 +28,17 @@ export default function useFoodPairingAI() {
     console.log('[ReversePairing] 🧠 Prompt:\n', prompt);
 
     try {
+      const user = auth?.currentUser;
+      if (!user) {
+        throw new Error('You must be signed in to use this feature.');
+      }
+      const idToken = await user.getIdToken();
+
       const res = await fetch('/api/gemini', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${idToken}`,
         },
         body: JSON.stringify({
           contents: [

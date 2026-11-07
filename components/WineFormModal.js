@@ -4,6 +4,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Modal from './Modal.js';
 import AlertMessage from './AlertMessage.js';
+import { auth } from '@/lib/firebaseClient';
+
+async function getGeminiAuthHeader() {
+    const user = auth?.currentUser;
+    if (!user) {
+        throw new Error('You must be signed in to use this feature.');
+    }
+    const idToken = await user.getIdToken();
+    return { Authorization: `Bearer ${idToken}` };
+}
 
 const WINE_COLOR_OPTIONS = ['red', 'white', 'rose', 'sparkling', 'other'];
 
@@ -123,9 +133,10 @@ const WineFormModal = ({ isOpen, onClose, onSubmit, wine, allWines, cellars = []
 }
 If a field cannot be determined from the label, use null. Do not guess.`;
 
+            const authHeader = await getGeminiAuthHeader();
             const res = await fetch('/api/gemini', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', ...authHeader },
                 body: JSON.stringify({
                     contents: [
                         {
@@ -135,12 +146,6 @@ If a field cannot be determined from the label, use null. Do not guess.`;
                                 { inlineData: { mimeType: 'image/jpeg', data: base64Data } }
                             ]
                         }
-                    ],
-                    safetySettings: [
-                        { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_ONLY_HIGH' },
-                        { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
-                        { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_ONLY_HIGH' },
-                        { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_ONLY_HIGH' }
                     ]
                 })
             });
@@ -195,9 +200,10 @@ If a field cannot be determined from the label, use null. Do not guess.`;
         setFormError('');
         try {
             const prompt = `Suggest a conservative drinking window in years for the following wine. The end year should err on the early side. Provide the result as \"YYYY-YYYY\" only.\\nProducer: ${formData.producer}\\nName: ${formData.name}\\nYear: ${formData.year}\\nColor: ${formData.color}`;
+            const authHeader = await getGeminiAuthHeader();
             const res = await fetch('/api/gemini', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', ...authHeader },
                 body: JSON.stringify({
                     contents: [
                         {
