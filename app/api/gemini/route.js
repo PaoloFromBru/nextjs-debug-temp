@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 
 export const runtime = 'nodejs';
 
@@ -13,6 +14,12 @@ const MAX_PARTS_PER_CONTENT = 4;
 const MAX_TEXT_LENGTH = 8_000;
 const MAX_INLINE_DATA_LENGTH = 4_500_000;
 const ALLOWED_INLINE_MIME_TYPES = ['image/jpeg', 'image/png'];
+// Per-user volume cap, on top of auth: without this, a single signed-in
+// user (or a compromised/buggy client) could still hammer the endpoint and
+// burn through our Gemini quota/budget. Overridable via env for tuning
+// without a code change.
+const RATE_LIMIT_MAX_REQUESTS = Number(process.env.GEMINI_RATE_LIMIT_MAX || 50);
+const RATE_LIMIT_WINDOW_MS = 24 * 60 * 60 * 1000;
 // Always enforced server-side; the caller can never loosen these, since that
 // would let anyone with our API key generate content Google's safety system
 // would otherwise block, which is what gets an API key/project suspended.
@@ -60,6 +67,39 @@ async function requireUser(request) {
   } catch (err) {
     console.error('Gemini proxy: failed to verify caller', err?.message || err);
     return null;
+  }
+}
+
+// Caps how many Gemini calls a single signed-in user can make per rolling
+// window. Fails open (allows the call, but logs) if Firestore is unreachable,
+// so a limiter outage degrades to "no limit" rather than taking the feature
+// down entirely.
+async function checkRateLimit(uid) {
+  const now = Date.now();
+
+  try {
+    const db = getFirestore();
+    const ref = db.collection('geminiRateLimits').doc(uid);
+
+    return await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      const data = snap.exists ? snap.data() : null;
+
+      if (!data || typeof data.windowStart !== 'number' || now - data.windowStart > RATE_LIMIT_WINDOW_MS) {
+        tx.set(ref, { windowStart: now, count: 1 });
+        return { allowed: true };
+      }
+
+      if (data.count >= RATE_LIMIT_MAX_REQUESTS) {
+        return { allowed: false };
+      }
+
+      tx.update(ref, { count: FieldValue.increment(1) });
+      return { allowed: true };
+    });
+  } catch (err) {
+    console.error('Gemini proxy: rate limit check failed, allowing request', err?.message || err);
+    return { allowed: true };
   }
 }
 
@@ -146,6 +186,14 @@ export async function POST(request) {
   const user = await requireUser(request);
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
+  }
+
+  const rateLimit = await checkRateLimit(user.uid);
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: 'Rate limit exceeded. Please try again later.' },
+      { status: 429 },
+    );
   }
 
   const contentLength = Number(request.headers.get('content-length') || 0);

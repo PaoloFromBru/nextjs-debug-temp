@@ -108,4 +108,7 @@ If any of the required variables are missing, the app will log an error and disa
 GEMINI_API_KEY=...
 GEMINI_MODEL=gemini-3.1-flash-lite       # optional; recommended for Vercel/runtime parity with the current GA Flash Lite model
 GEMINI_API_VERSION=v1beta                # or v1 when available
+GEMINI_RATE_LIMIT_MAX=50                 # optional; max /api/gemini calls per signed-in user per rolling 24h (default 50)
 ```
+
+`/api/gemini` also caps how many requests a single signed-in user can make per rolling 24h window (tracked in the `geminiRateLimits` Firestore collection via the same Firebase Admin credentials above), on top of requiring auth — this protects the Gemini API quota/budget even from a single compromised or misbehaving account.
