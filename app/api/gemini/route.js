@@ -11,7 +11,9 @@ const DEFAULT_API_VERSION = (process.env.GEMINI_API_VERSION || 'v1beta').trim();
 const MAX_CONTENT_LENGTH_BYTES = 6_000_000;
 const MAX_CONTENTS = 4;
 const MAX_PARTS_PER_CONTENT = 4;
-const MAX_TEXT_LENGTH = 8_000;
+// The reverse-pairing prompt embeds the user's whole cellar list (~100 chars
+// per wine), so this must fit a large cellar; the rate limit bounds abuse.
+const MAX_TEXT_LENGTH = 60_000;
 const MAX_INLINE_DATA_LENGTH = 4_500_000;
 const ALLOWED_INLINE_MIME_TYPES = ['image/jpeg', 'image/png'];
 // Per-user volume cap, on top of auth: without this, a single signed-in
