@@ -204,6 +204,7 @@ export async function POST(request) {
   const apiKey = process.env.GEMINI_API_KEY;
 
   if (!apiKey) {
+    console.error('Gemini proxy: GEMINI_API_KEY missing in environment');
     return NextResponse.json(
       { error: 'Missing Gemini API key in environment variables.' },
       { status: 500 },
@@ -220,6 +221,7 @@ export async function POST(request) {
     const rawBody = await request.json();
     const body = sanitizeBody(rawBody);
     if (!body) {
+      console.error('Gemini proxy: request body rejected by sanitizeBody', JSON.stringify(rawBody)?.slice(0, 500));
       return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });
     }
 
@@ -267,6 +269,7 @@ export async function POST(request) {
 
     if (!geminiRes.ok) {
       const errorText = await geminiRes.text();
+      console.error('Gemini proxy: upstream call failed', geminiRes.status, errorText);
       return NextResponse.json({ error: `Gemini API Error: ${errorText}` }, { status: geminiRes.status });
     }
 
@@ -278,6 +281,7 @@ export async function POST(request) {
     res.headers.set('cache-control', 'no-store');
     return res;
   } catch (err) {
+    console.error('Gemini proxy: unexpected error', err?.message || err);
     return NextResponse.json({ error: `Proxy Error: ${err.message}` }, { status: 500 });
   }
 }
