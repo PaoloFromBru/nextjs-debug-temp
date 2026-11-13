@@ -20,6 +20,12 @@ const ALLOWED_INLINE_MIME_TYPES = ['image/jpeg', 'image/png'];
 // without a code change.
 const RATE_LIMIT_MAX_REQUESTS = Number(process.env.GEMINI_RATE_LIMIT_MAX || 50);
 const RATE_LIMIT_WINDOW_MS = 24 * 60 * 60 * 1000;
+// Firestore's client retries failed auth/transactions for ~45s before giving
+// up. Since the limiter fails open anyway, cap how long it may block the
+// request so a Firestore problem can't stall every AI call.
+const RATE_LIMIT_TIMEOUT_MS = 3_000;
+// Upper bound on the upstream Gemini call, so the client always gets an answer.
+const GEMINI_TIMEOUT_MS = 30_000;
 // Always enforced server-side; the caller can never loosen these, since that
 // would let anyone with our API key generate content Google's safety system
 // would otherwise block, which is what gets an API key/project suspended.
@@ -81,7 +87,7 @@ async function checkRateLimit(uid) {
     const db = getFirestore();
     const ref = db.collection('geminiRateLimits').doc(uid);
 
-    return await db.runTransaction(async (tx) => {
+    const transaction = db.runTransaction(async (tx) => {
       const snap = await tx.get(ref);
       const data = snap.exists ? snap.data() : null;
 
@@ -97,6 +103,21 @@ async function checkRateLimit(uid) {
       tx.update(ref, { count: FieldValue.increment(1) });
       return { allowed: true };
     });
+    // Avoid an unhandled rejection if the transaction fails after the timeout.
+    transaction.catch(() => {});
+
+    let timer;
+    const timeout = new Promise((_, reject) => {
+      timer = setTimeout(
+        () => reject(new Error(`timed out after ${RATE_LIMIT_TIMEOUT_MS}ms`)),
+        RATE_LIMIT_TIMEOUT_MS,
+      );
+    });
+    try {
+      return await Promise.race([transaction, timeout]);
+    } finally {
+      clearTimeout(timer);
+    }
   } catch (err) {
     console.error('Gemini proxy: rate limit check failed, allowing request', err?.message || err);
     return { allowed: true };
@@ -230,6 +251,7 @@ export async function POST(request) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(GEMINI_TIMEOUT_MS),
     });
 
     // On model deprecation/unknown model, try a resilient fallback once
@@ -253,6 +275,7 @@ export async function POST(request) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
+          signal: AbortSignal.timeout(GEMINI_TIMEOUT_MS),
         });
 
         if (retryRes.ok) {
@@ -282,6 +305,9 @@ export async function POST(request) {
     return res;
   } catch (err) {
     console.error('Gemini proxy: unexpected error', err?.message || err);
+    if (err?.name === 'TimeoutError') {
+      return NextResponse.json({ error: 'Gemini API timed out.' }, { status: 504 });
+    }
     return NextResponse.json({ error: `Proxy Error: ${err.message}` }, { status: 500 });
   }
 }

@@ -365,9 +365,15 @@ export default function HomePage() {
     setPairingSuggestion("");
     try {
       const prompt = `Suggest 1-3 foods that would pair well with the wine: ${wine.producer} ${wine.name ? "(" + wine.name + ")" : ""} ${wine.region} ${wine.year || ""}.`;
+      const currentUser = auth?.currentUser;
+      if (!currentUser) throw new Error("You must be signed in to use this feature.");
+      const idToken = await currentUser.getIdToken();
       const res = await fetch("/api/gemini", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
         body: JSON.stringify({
           contents: [
             {
